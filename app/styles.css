@@ -1,0 +1,7 @@
+.background {
+    fill: none;
+    pointer-events: all;
+}
+.active {
+    fill: orange;
+}
