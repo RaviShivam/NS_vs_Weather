@@ -3,7 +3,6 @@
 
 // set up main nv object
 var nv = {};
-console.log('Faka')
 
 // the major global objects under the nv namespace
 nv.dev = false; //set false when in production
@@ -13,7 +12,6 @@ nv.models = nv.models || {}; //stores all the possible models/components
 nv.charts = {}; //stores all the ready to use charts
 nv.logs = {}; //stores some statistics and potential error messages
 nv.dom = {}; //DOM manipulation functions
-window.nv = nv;
 
 // Node/CommonJS - require D3
 if (typeof(module) !== 'undefined' && typeof(exports) !== 'undefined' && typeof(d3) == 'undefined') {
@@ -451,8 +449,6 @@ nv.interactiveGuideline = function() {
  */
 nv.interactiveBisect = function (values, searchVal, xAccessor) {
     "use strict";
-    //console.log(values)
-    //console.log('searchValue: ' + searchVal)
     if (! (values instanceof Array)) {
         return null;
     }
@@ -812,7 +808,6 @@ nv.models.tooltip = function() {
             // Generate data and set it into tooltip.
             // Bonus - If you override contentGenerator and return false, you can use something like
             //         Angular, React or Knockout to bind the data for your tooltip directly to the DOM.
-            console.log(data)
             var newContent = contentGenerator(data, tooltip.node());
             if (newContent) {
                 tooltip.node().innerHTML = newContent;
@@ -3775,8 +3770,6 @@ nv.models.cumulativeLineChart = function() {
                         if (typeof point === 'undefined') return;
                         if (typeof singlePoint === 'undefined') singlePoint = point;
                         if (typeof pointXLocation === 'undefined') pointXLocation = chart.xScale()(chart.x()(point,pointIndex));
-                        console.log(point)
-                        console.log(pointIndex)
                         allData.push({
                             key: series.key,
                             value: chart.y()(point, pointIndex),
@@ -7097,7 +7090,6 @@ nv.models.historicalBarChart = function(bar_model) {
                 bars.clearHighlights();
 
                 var singlePoint, pointIndex, pointXLocation, allData = [];
-                window.allData = allData;
                 data
                     .filter(function(series, i) {
                         series.seriesIndex = i;
@@ -10295,8 +10287,6 @@ nv.models.multiBarHorizontal = function() {
                     });
                 })
                 .on('mousemove', function(d,i) {
-                  console.log(d);
-                  console.log(i);
                     dispatch.elementMousemove({
                         data: d,
                         index: i,
@@ -10304,8 +10294,6 @@ nv.models.multiBarHorizontal = function() {
                     });
                 })
                 .on('click', function(d,i) {
-                  console.log(d);
-                  console.log(i);
                     var element = this;
                     dispatch.elementClick({
                         data: d,
@@ -10317,8 +10305,6 @@ nv.models.multiBarHorizontal = function() {
                     d3.event.stopPropagation();
                 })
                 .on('dblclick', function(d,i) {
-                  console.log(d);
-                  console.log(i);
                     dispatch.elementDblClick({
                         data: d,
                         index: i,
@@ -11594,8 +11580,6 @@ nv.models.ohlcBar = function() {
 
             container
                 .on('click', function(d,i) {
-                  console.log(d);
-                  console.log(i);
                     dispatch.chartClick({
                         data: d,
                         index: i,
@@ -12120,8 +12104,6 @@ nv.models.parallelCoordinates = function() {
             function updateTicks() {
                 dimensions.select('.nv-axis')
                     .each(function (d, i) {
-                  console.log(d);
-                  console.log(i);
                         var f = filters.filter(function (k) { return k.dimension == d.key; });
                         currentTicks[d.key] = y[d.key].domain();
 
@@ -12139,12 +12121,10 @@ nv.models.parallelCoordinates = function() {
                 });
             }
             function dragStart(d) {
-              console.log(d);
                 dragging[d.key] = this.parentNode.__origin__ = x(d.key);
                 background.attr("visibility", "hidden");
             }
             function dragMove(d) {
-              console.log(d);
                 dragging[d.key] = Math.min(availableWidth, Math.max(0, this.parentNode.__origin__ += d3.event.x));
                 foreground.attr("d", path);
                 enabledDimensions.sort(function (a, b) { return dimensionPosition(a.key) - dimensionPosition(b.key); });
@@ -12153,7 +12133,6 @@ nv.models.parallelCoordinates = function() {
                 dimensions.attr("transform", function(d) { return "translate(" + dimensionPosition(d.key) + ")"; });
             }
             function dragEnd(d, i) {
-              console.log(d);
                 delete this.parentNode.__origin__;
                 delete dragging[d.key];
                 d3.select(this.parentNode).attr("transform", "translate(" + x(d.key) + ")");
@@ -12166,7 +12145,6 @@ nv.models.parallelCoordinates = function() {
                 dispatch.dimensionsOrder(enabledDimensions);
             }
             function dimensionPosition(d) {
-              console.log(d);
                 var v = dragging[d];
                 return v == null ? x(d) : v;
             }
@@ -15656,7 +15634,6 @@ nv.models.stackedAreaChart = function() {
         , tooltip = nv.models.tooltip()
         , focus = nv.models.focus(nv.models.stackedArea())
         ;
-        window.stacked = stacked
 
     var margin = {top: 10, right: 25, bottom: 50, left: 60}
         , marginTop = null
@@ -15691,8 +15668,6 @@ nv.models.stackedAreaChart = function() {
 
     tooltip
         .headerFormatter(function(d, i) {
-          console.log(d)
-          console.log(i)
             return xAxis.tickFormat()(d, i);
         })
         .valueFormatter(function(d, i) {
@@ -16180,6 +16155,7 @@ nv.models.stackedAreaChart = function() {
             //------------------------------------------------------------
 
             function onBrush(extent) {
+              console.log(extent)
                 // Update Main (Focus)
                 var stackedWrap = g.select('.nv-focus .nv-stackedWrap')
                     .datum(
@@ -16214,7 +16190,6 @@ nv.models.stackedAreaChart = function() {
     //------------------------------------------------------------
 
     stacked.dispatch.on('elementMouseover.tooltip', function(evt) {
-        console.log(evt)
         evt.point['x'] = stacked.x()(evt.point);
         evt.point['y'] = stacked.y()(evt.point);
         tooltip.data(evt).hidden(false);
