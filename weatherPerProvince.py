@@ -34,4 +34,4 @@ for (index, row) in wspp.iterrows():
 
   output = pd.concat([output, province_data])
 
-output.to_csv('weatherPerProvince.csv', index=False)
+output.to_csv('./data/weatherPerProvince.csv', index=False)
