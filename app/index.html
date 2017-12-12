@@ -10,6 +10,15 @@
     <body>
         <div class="container">
 
+            <div class="map-toolbar">
+                <input type="date" id="datePicker" value="2017-01-01" min="2011-01-03" max="2017-09-30"/>
+                <select id="weatherConditionPicker">
+                    <option value="temperature">Temperature</option>
+                    <option value="precipitation">Precipitation</option>
+                    <option value="sight">Sight</option>
+                </select>
+            </div>
+
             <div class="scatterPlotContainer"></div>
 
             <div id="mapContainer"></div>

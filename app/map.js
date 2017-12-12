@@ -1,3 +1,5 @@
+// ----------------- SETTING UP D3 STUFF ----------------------------------------
+// ------------------------------------------------------------------------------
 var width = document.body.clientWidth,
     height = document.body.clientHeight;
 
@@ -33,6 +35,32 @@ function zoomed() {
   g.attr("transform", d3.event.transform);
 }
 
+function focus(d) {
+  if (active.node() === this) return reset();
+  active.classed("active", false);
+  active = d3.select(this).classed("active", true);
+
+  var bounds = path.bounds(d),
+      dx = bounds[1][0] - bounds[0][0],
+      dy = bounds[1][1] - bounds[0][1],
+      x = (bounds[0][0] + bounds[1][0]) / 2,
+      y = (bounds[0][1] + bounds[1][1]) / 2,
+      scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
+      translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+  svg.transition()
+      .duration(750)
+      .call(zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale));
+}
+
+function reset() {
+  active.classed("active", false);
+  active = d3.select(null);
+  svg.transition()
+      .duration(750)
+      .call( zoom.transform, d3.zoomIdentity );
+}
+
 // Setup layer order
 var provinceLayer = g.append("g");
 var trackLayer = g.append("g");
@@ -47,7 +75,9 @@ var tip = d3.tip().attr('class', 'd3-tip')
     });
 svg.call(tip);
 
-// Add NL map
+// ----------------- ADD MAP ----------------------------------------------------
+// ------------------------------------------------------------------------------
+const provinceNames = [];
 d3.json("../data/provinces.json", function(error, data) {
   var colour = d3.scaleOrdinal(d3.schemeCategory20);
 
@@ -59,8 +89,6 @@ d3.json("../data/provinces.json", function(error, data) {
   projection
       .scale(s)
       .translate(t);
-
-  const provinceNames = [];
 
   provinceLayer.selectAll("path")
       .data(topojson.feature(data, data.objects.subunits).features).enter()
@@ -76,46 +104,21 @@ d3.json("../data/provinces.json", function(error, data) {
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
 
+  const min = -10, max = 10;
 
-
-  // Weather condition as color
-  d3.csv("../data/weatherPerProvince.csv", function(error, data) {
-    const provinceData = {};
-
-    var min = 10000, max = -10000;
-    provinceNames.forEach(function (province) {
-      const firstEntry = data.map(function(a) { return a.PROVINCE }).indexOf(province);
-      if (firstEntry !== -1) {
-        provinceData[province] = parseInt(data[firstEntry].TG) / 10;
-        min = Math.min(min, provinceData[province]);
-        max = Math.max(max, provinceData[province]);
-      }
-    });
-
-    min -= 2;
-    max += 2;
-
-    var color = d3.scaleLinear()
-        .domain([min, max])
-        .range(["blue", "red"]);
-
-    Object.keys(provinceData).forEach(function(province) {
-      d3.select("#" + province).style("fill", color(provinceData[province]));
-    });
-
-    // Legend
-    svg.append("linearGradient")
-        .attr("id", "temperature-gradient")
-        .attr("x1", "0%").attr("y1", "0%")
-        .attr("x2", "100%").attr("y2", "0%")
-        .selectAll("stop")
-        .data([
-          {offset: "0%", color: "blue"},
-          {offset: "100%", color: "red"}
-        ])
-        .enter().append("stop")
-        .attr("offset", function(d) { return d.offset; })
-        .attr("stop-color", function(d) { return d.color; });
+  // Legend
+  svg.append("linearGradient")
+      .attr("id", "temperature-gradient")
+      .attr("x1", "0%").attr("y1", "0%")
+      .attr("x2", "100%").attr("y2", "0%")
+      .selectAll("stop")
+      .data([
+        {offset: "0%", color: "blue"},
+        {offset: "100%", color: "red"}
+      ])
+      .enter().append("stop")
+      .attr("offset", function(d) { return d.offset; })
+      .attr("stop-color", function(d) { return d.color; });
 
     var legendWidth = width * 0.6,
         legendHeight = 10;
@@ -162,40 +165,72 @@ d3.json("../data/provinces.json", function(error, data) {
 
     //Set up X axis
     legendsvg.append("g")
-        .attr("class", "axis")  //Assign "axis" class
+        .attr("class", "axis axisText")  //Assign "axis" class
         .attr("transform", "translate(" + (-legendWidth/2) + "," + (10 + legendHeight) + ")")
-        .attr("class", "axisText")
-        .call(xAxis)
-  });
+        .call(xAxis);
 });
 
-function focus(d) {
-  if (active.node() === this) return reset();
-  active.classed("active", false);
-  active = d3.select(this).classed("active", true);
+// ----------------- WEATHER PER PROVINCE IN MAP --------------------------------
+// ------------------------------------------------------------------------------
+var weatherData = [];
+d3.csv("../data/weatherPerProvince.csv", function(error, data) {
+  weatherData = data;
+  plotWeather(new Date(2017, 0, 0), 'Temperature');
+});
 
-  var bounds = path.bounds(d),
-      dx = bounds[1][0] - bounds[0][0],
-      dy = bounds[1][1] - bounds[0][1],
-      x = (bounds[0][0] + bounds[1][0]) / 2,
-      y = (bounds[0][1] + bounds[1][1]) / 2,
-      scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
-      translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-  svg.transition()
-      .duration(750)
-      .call(zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale));
-}
-function reset() {
-  active.classed("active", false);
-  active = d3.select(null);
-  svg.transition()
-      .duration(750)
-      .call( zoom.transform, d3.zoomIdentity );
+function convertDate(inputFormat, seperator) {
+  function pad(s) { return (s < 10) ? '0' + s : s; }
+  var d = new Date(inputFormat);
+  return [d.getFullYear(), pad(d.getMonth()+1), pad(d.getDate())].join(seperator || '');
 }
 
+function plotWeather(date, condition) {
+  const formattedDate = convertDate(date);
+  // Weather condition as color
+  const provinceData = {};
 
-// Add stations
+  var min = 10000, max = -10000;
+  provinceNames.forEach(function (province) {
+    const provinceWeather = weatherData.filter(function(a) { return a.PROVINCE === province });
+    const dateWeather = provinceWeather.find(function(a) { return a['YYYYMMDD'] === formattedDate });
+    if (dateWeather) {
+      provinceData[province] = parseInt(dateWeather.TG) / 10;
+      min = Math.min(min, provinceData[province]);
+      max = Math.max(max, provinceData[province]);
+    }
+  });
+
+  min -= 2;
+  max += 2;
+
+  var color = d3.scaleLinear()
+      .domain([min, max])
+      .range(["blue", "red"]);
+
+  Object.keys(provinceData).forEach(function(province) {
+    d3.select("#" + province).style("fill", color(provinceData[province]));
+  });
+
+  //Set title
+  d3.select('.legendTitle').text(condition);
+
+  //Set scale for x-axis
+  var legendWidth = width * 0.6;
+  var xScale = d3.scaleLinear()
+      .range([0, legendWidth])
+      .domain([min, max]);
+
+  //Define x-axis
+  var xAxis = d3.axisBottom()
+      .ticks(5)
+      .scale(xScale);
+
+  //Set up X axis
+  d3.select('.axis').call(xAxis);
+}
+
+// ----------------- ADD TRAIN STATIONS -----------------------------------------
+// ------------------------------------------------------------------------------
 d3.csv("../data/trainStations.csv", function(error, stations) {
 
   const stationsGeo = {
@@ -257,29 +292,6 @@ d3.csv("../data/trainStations.csv", function(error, stations) {
   // setupUI(types);
 });
 
-// Setup UI elements
-function setupUI(types) {
-  const container = document.createElement('div');
-  document.getElementById("mapContainer").appendChild(container);
-
-  types.forEach(function(type) {
-    var checkbox = document.createElement('input');
-    checkbox.type = "checkbox";
-    checkbox.name = type;
-    checkbox.value = type;
-    checkbox.id = type;
-    checkbox.checked = true;
-    checkbox.onclick = filterType;
-
-    var label = document.createElement('label');
-    label.htmlFor = type;
-    label.appendChild(document.createTextNode(type));
-
-    container.appendChild(checkbox);
-    container.appendChild(label);
-  });
-}
-
 function filterType(e) {
   const type = e.target.name;
   const checked = e.target.checked;
@@ -318,11 +330,40 @@ function filterType(e) {
 //   });
 // });
 
-// Add tracks
-const tracks = {};
+// ----------------- ADD TRAIN TRACKS/LINES -------------------------------------
+// ------------------------------------------------------------------------------
+
+var disturbances = [];
 d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
-  for (var i = 1; i < data.length; i++) {
-    const seperateLines = data[i].lines.split(' ');
+  disturbances = data;
+
+  const trackData = getDisturbancesPerTrack(data);
+  const tracks = trackData.tracks;
+  const maxDuration = trackData.maxDuration;
+  const maxCount = trackData.maxCount;
+
+  // Add tracks/lines
+  d3.json("../data/tracks.geojson", function(error, data) {
+    trackLayer.selectAll("path")
+        .data(data.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("class", "track")
+        .attr("id", function(d) { var f = d.properties.from; var t = d.properties.to; return f < t ? (f + '-' + t) : (t + '-' + f) }) // alphabetic order
+        .attr("stroke", "yellow")
+        .attr("stroke-width", function() { return 0.5 + (this.id in tracks ? (3 * tracks[this.id].count / maxCount): 0)})
+        .attr("fill", "none")
+        .on("click", function(d) { focus.bind(this)(d); console.log(this.id); })
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide);
+  });
+});
+
+function getDisturbancesPerTrack(distSubset) {
+  const tracks = {};
+  for (var i = 1; i < distSubset.length; i++) {
+    const seperateLines = distSubset[i].lines.split(' ');
 
     seperateLines.forEach(function (line) {
       const lineTracks = line.split('-');
@@ -334,32 +375,63 @@ d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
 
         if (track in tracks) {
           tracks[track].count += 1;
-          tracks[track].totalDuration += parseFloat(data[i].duration_minutes);
+          tracks[track].totalDuration += parseFloat(distSubset[i].duration_minutes);
         } else {
-          tracks[track] = { count: 1, totalDuration: parseFloat(data[i].duration_minutes) };
+          tracks[track] = { count: 1, totalDuration: parseFloat(distSubset[i].duration_minutes) };
         }
       }
     });
   }
-  const maxDuration = Object.values(tracks).map(function(a) { return a.totalDuration; }).filter(function(a) { return !isNaN(a) }).reduce(function(a, b) { return Math.max(a, b)});
-  const maxCount = Object.values(tracks).map(function(a) { return a.count; }).reduce(function(a, b) { return Math.max(a, b)});
+  var maxDuration = 1;
+  var maxCount = 1;
 
-  // Add tracks/lines
-  d3.json("../data/tracks.geojson", function(error, data) {
+  if (Object.keys(tracks).length > 0) {
+    maxDuration = Object.values(tracks).map(function(a) { return a.totalDuration; }).filter(function(a) { return !isNaN(a) }).reduce(function(a, b) { return Math.max(a, b)});
+    maxCount = Object.values(tracks).map(function(a) { return a.count; }).reduce(function(a, b) { return Math.max(a, b)});
+  }
+  return {
+    tracks: tracks,
+    maxDuration: maxDuration,
+    maxCount: maxCount
+  };
+}
 
-    trackLayer.selectAll("path")
-        .data(data.features)
-        .enter()
-        .append("path")
-        .attr("d", path)
-        .attr("class", "track")
-        .attr("id", function(d) { var f = d.properties.from; var t = d.properties.to; return f < t ? (f + '-' + t) : (t + '-' + f) }) // alphabetic order
+function plotDisturbances(date, types) {
+  var dateDisturbances = [];
+  var formattedDate = convertDate(date);
+  var dateFound = false;
+  for (var i = 0; i < disturbances.length; i++) {
+    var startTime = disturbances[i]['start_time'].split(' ')[0].split('-');
+    var dDate = convertDate(new Date(startTime[0], startTime[1], startTime[2]));
+    if (formattedDate === dDate) {
+      dateFound = true;
+      dateDisturbances.push(disturbances[i]);
+    } else if (dateFound) break;
+  }
+
+  const trackData = getDisturbancesPerTrack(dateDisturbances);
+  const tracks = trackData.tracks;
+  const maxDuration = trackData.maxDuration;
+  const maxCount = trackData.maxCount;
+
+  // Deselect/select tracks from this date
+  d3.selectAll('.track')
+      .attr("stroke", "gray")
+      .attr("stroke-width", 0.5);
+  Object.keys(tracks).forEach(function (trackId) {
+    d3.select('#' + trackId)
         .attr("stroke", "yellow")
-        .attr("stroke-width", function() { return 0.5 + (this.id in tracks ? (3 * tracks[this.id].totalDuration / maxDuration): 0)})
-        .attr("fill", "none")
-        .on("click", function (d) { console.log(d.properties, this.id in tracks && tracks[this.id]) })
-        .on('mouseover', tip.show)
-        .on('mouseout', tip.hide);
+        .attr("stroke-width", function() { return 0.5 + (this.id in tracks ? (3 * tracks[this.id].count / maxCount): 0)})
   });
-});
+}
 
+
+// ----------------- BIND FUNCTIONS TO UI ---------------------------------------
+// ------------------------------------------------------------------------------
+function chooseDate(e) {
+  const date = new Date(e.target.value);
+  console.log('Plotting data for date: ', date);
+  plotWeather(date, 'Temperature');
+  plotDisturbances(date);
+}
+document.getElementById('datePicker').onchange = chooseDate;
