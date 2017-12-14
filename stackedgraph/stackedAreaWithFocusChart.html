@@ -85,6 +85,9 @@
 
         chart.legend.vers('furious');
 
+        // data = d3.csv("delays.csv", function(d) {
+        //
+        // })
         d3.select('#chart1')
             .datum(histcatexplong)
             .transition().duration(1000)
@@ -99,7 +102,11 @@
             });
         //
         nv.utils.windowResize(chart.update);
+        d3.selectAll(".resize").on("dragleave", function(d){
+          console.log(d)
+        });
         return chart;
+
     });
 
 
