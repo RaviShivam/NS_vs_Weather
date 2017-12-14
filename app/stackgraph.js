@@ -67,13 +67,13 @@ nv.addGraph(function() {
     // data = d3.csv("delays.csv", function(d) {
     //
     // })
-    d3.select('#chart1')
+    d3.select('#stackGraphContainer')
         .datum(histcatexplong)
         .transition().duration(1000)
         .call(chart)
         .each('start', function() {
             setTimeout(function() {
-                d3.selectAll('#chart1 *').each(function() {
+                d3.selectAll('#stackGraphContainer *').each(function() {
                     if(this.__transition__)
                         this.__transition__.duration = 4;
                 })

@@ -4,31 +4,32 @@
 
     <head>
         <title>Treinstoringen</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link type="text/css" rel="stylesheet" href="styles.css">
         <link href="../app/nv.d3.css" rel="stylesheet" type="text/css">
-
     </head>
 
     <body>
         <div class="container">
-            <div class="scatterPlotContainer"></div>
+            <div id="scatterPlotContainer"></div>
 
             <div id="mapContainer"></div>
 
-            <div class="timeline"></div>
-
-            <svg id="chart1"></svg>
+            <svg id="stackGraphContainer"></svg>
 
         </div>
 
+        <!-- General libraries -->
         <script src="http://d3js.org/d3.v3.min.js"></script>
+
+        <!-- Scatterplot code & libraries -->
+        <script src="scatterplots.js"></script>
+
+        <!-- Map code & libraries -->
         <script src="http://d3js.org/topojson.v1.min.js"></script>
         <script src="d3-tip.js"></script>
         <script src="map.js"></script>
 
-        <script src="scatterplots.js"></script>
-
-        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" charset="utf-8"></script>-->
+        <!-- Stackgraph code & libraries -->
         <script src="../app/nv.d3.js"></script>
         <script src="stackgraph.js"></script>
 

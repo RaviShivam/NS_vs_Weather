@@ -1,7 +1,7 @@
 // ----------------- SETTING UP D3 STUFF ----------------------------------------
 // ------------------------------------------------------------------------------
-var width = document.body.clientWidth,
-    height = document.body.clientHeight / 4 * 3;
+var width = document.body.clientWidth / 2,
+    height = document.body.clientHeight / 3 * 2;
 
 var projection = d3.geo.mercator()
     .scale(1)
@@ -36,6 +36,7 @@ function zoomed() {
 }
 
 function focus(d) {
+  if (d3.event.defaultPrevented) return;
   if (active.node() === this) return reset();
   active.classed("active", false);
   active = d3.select(this).classed("active", true);
@@ -117,7 +118,7 @@ d3.json("../data/provinces.json", function(error, data) {
       .attr("stroke-width", 0.2)
       .attr("class", "province")
       .attr("id", function(d) { return d.properties.name; })
-      .on('dragend', function(d){  d3.event.sourceEvent.stopPropagation() })
+      .on('dragend', function(d){  d3.event.preventDefault() })
       .on("click", focus)
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
