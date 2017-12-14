@@ -3341,6 +3341,8 @@ nv.models.focus = function(content) {
         , brush = d3.svg.brush()
         ;
 
+    window.brush = brush;
+
     var margin = {top: 10, right: 0, bottom: 30, left: 0}
         , color = nv.utils.defaultColor()
         , width = null
@@ -3568,6 +3570,7 @@ nv.models.focus = function(content) {
     chart.xAxis = xAxis;
     chart.yAxis = yAxis;
     chart.options = nv.utils.optionsFunc.bind(chart);
+    chart.brush = brush;
 
     chart._options = Object.create({}, {
         // simple options, just get/set the necessary values
@@ -5955,6 +5958,7 @@ nv.models.stackedAreaChart = function() {
             function onBrush(extent) {
                 // Update Main (Focus)
                 window.timeRange = extent;
+
                 var stackedWrap = g.select('.nv-focus .nv-stackedWrap')
                     .datum(
                     data.filter(function(d) { return !d.disabled; })

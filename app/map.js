@@ -1,7 +1,7 @@
 // ----------------- SETTING UP D3 STUFF ----------------------------------------
 // ------------------------------------------------------------------------------
 var width = document.body.clientWidth,
-    height = document.body.clientHeight;
+    height = document.body.clientHeight / 4 * 3;
 
 var projection = d3.geo.mercator()
     .scale(1)
@@ -31,7 +31,8 @@ svg.call(zoom);
 
 function zoomed() {
   // g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
-  g.attr("transform", d3.event.transform);
+    zoom.translate(d3.event.translate);
+    g.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 }
 
 function focus(d) {
@@ -47,19 +48,22 @@ function focus(d) {
       scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
       translate = [width / 2 - scale * x, height / 2 - scale * y];
 
-  svg.transition()
+  g.transition()
       .duration(750)
-      .call(
-          zoom.translate(translate)
-              .scale(scale));
+      .attr('transform', 'translate(' + translate + ')' + " scale(" + scale + ")");
+  zoom.scale(scale);
+  zoom.translate(translate);
 }
 
 function reset() {
   active.classed("active", false);
   active = d3.select(null);
-  svg.transition()
+  g.transition()
       .duration(750)
-      .call( zoom.transform, d3.zoomIdentity );
+      .attr('transform', 'translate(' + [0.5, 0.5] + ') scale(1)');
+  zoom.scale(1);
+  zoom.translate([0.5, 0.5]);
+
 }
 
 // Setup layer order
@@ -78,7 +82,20 @@ svg.call(tip);
 
 // ----------------- ADD MAP ----------------------------------------------------
 // ------------------------------------------------------------------------------
-const provinceNames = [];
+const provinceNames = [
+    'Groningen',
+    'Friesland',
+    'Drenthe',
+    'Overijssel',
+    'Flevoland',
+    'Gelderland',
+    'Utrecht',
+    'Noord-Holland',
+    'Zuid-Holland',
+    'Zeeland',
+    'Noord-Brabant',
+    'Limburg'
+];
 d3.json("../data/provinces.json", function(error, data) {
   var colour = d3.scale.ordinal(d3.schemeCategory20);
 
@@ -100,7 +117,7 @@ d3.json("../data/provinces.json", function(error, data) {
       .attr("stroke-width", 0.2)
       .attr("class", "province")
       .attr("id", function(d) { return d.properties.name; })
-      .each(function(d) { provinceNames.push(d.properties.name)})
+      .on('dragend', function(d){  d3.event.sourceEvent.stopPropagation() })
       .on("click", focus)
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
@@ -177,7 +194,7 @@ d3.json("../data/provinces.json", function(error, data) {
 var weatherData = [];
 d3.csv("../data/weatherPerProvince.csv", function(error, data) {
   weatherData = data;
-  plotWeather(new Date(2017, 0, 0), 'Temperature');
+  plotWeather(['20130101', '20170101'], 'Temperature');
 });
 
 function convertDate(inputFormat, seperator) {
@@ -186,20 +203,26 @@ function convertDate(inputFormat, seperator) {
   return [d.getFullYear(), pad(d.getMonth()+1), pad(d.getDate())].join(seperator || '');
 }
 
-function plotWeather(date, condition) {
-  const formattedDate = convertDate(date);
+function plotWeather(extent, condition) {
+
   // Weather condition as color
   const provinceData = {};
 
+  const dateWeather = weatherData.filter(function(a) { return a['YYYYMMDD'] > extent[0] && a['YYYYMMDD'] < extent[1] });
+
   var min = 10000, max = -10000;
   provinceNames.forEach(function (province) {
-    const provinceWeather = weatherData.filter(function(a) { return a.PROVINCE === province });
-    const dateWeather = provinceWeather.find(function(a) { return a['YYYYMMDD'] === formattedDate });
-    if (dateWeather) {
-      provinceData[province] = parseInt(dateWeather.TG) / 10;
-      min = Math.min(min, provinceData[province]);
-      max = Math.max(max, provinceData[province]);
-    }
+    const provinceWeather = dateWeather.filter(function(a) { return a.PROVINCE === province });
+
+    var sum = 0;
+    var minProv = 100;
+    provinceWeather.forEach(function (item) { minProv = Math.min(minProv, parseInt(item.TG) / 10); });
+
+    if (minProv !== 100)
+      provinceData[province] = minProv;
+
+    min = Math.min(min, provinceData[province]) || min;
+    max = Math.max(max, provinceData[province]) || max;
   });
 
   min -= 2;
@@ -210,7 +233,7 @@ function plotWeather(date, condition) {
       .range(["blue", "red"]);
 
   Object.keys(provinceData).forEach(function(province) {
-    d3.select("#" + province).style("fill", color(provinceData[province]));
+    d3.select("#" + province.replace(' ', '')).style("fill", color(provinceData[province]));
   });
 
   //Set title
@@ -399,17 +422,16 @@ function getDisturbancesPerTrack(distSubset) {
   };
 }
 
-function plotDisturbances(date, types) {
+function plotDisturbances(extent, types) {
   var dateDisturbances = [];
-  var formattedDate = convertDate(date);
-  var dateFound = false;
+
+
   for (var i = 0; i < disturbances.length; i++) {
     var startTime = disturbances[i]['start_time'].split(' ')[0].split('-');
     var dDate = convertDate(new Date(startTime[0], startTime[1], startTime[2]));
-    if (formattedDate === dDate) {
-      dateFound = true;
-      dateDisturbances.push(disturbances[i]);
-    } else if (dateFound) break;
+
+    if (dDate > extent[1]) break;
+    if (dDate >= extent[0]) dateDisturbances.push(disturbances[i]);
   }
 
   const trackData = getDisturbancesPerTrack(dateDisturbances);
@@ -431,10 +453,8 @@ function plotDisturbances(date, types) {
 
 // ----------------- BIND FUNCTIONS TO UI ---------------------------------------
 // ------------------------------------------------------------------------------
-function chooseDate(e) {
-  const date = new Date(e.target.value);
-  console.log('Plotting data for date: ', date);
-  plotWeather(date, 'Temperature');
-  plotDisturbances(date);
+function chooseMapDateExtent(extent) {
+  var formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
+  plotWeather(formattedExtent, 'Temperature');
+  plotDisturbances(formattedExtent);
 }
-document.getElementById('datePicker').onchange = chooseDate;

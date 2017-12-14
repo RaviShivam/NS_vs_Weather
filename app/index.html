@@ -5,25 +5,19 @@
     <head>
         <title>Treinstoringen</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
+        <link href="../app/nv.d3.css" rel="stylesheet" type="text/css">
+
     </head>
 
     <body>
         <div class="container">
-
-            <div class="map-toolbar">
-                <input type="date" id="datePicker" value="2017-01-01" min="2011-01-03" max="2017-09-30"/>
-                <select id="weatherConditionPicker">
-                    <option value="temperature">Temperature</option>
-                    <option value="precipitation">Precipitation</option>
-                    <option value="sight">Sight</option>
-                </select>
-            </div>
-
             <div class="scatterPlotContainer"></div>
 
             <div id="mapContainer"></div>
 
             <div class="timeline"></div>
+
+            <svg id="chart1"></svg>
 
         </div>
 
@@ -31,7 +25,12 @@
         <script src="http://d3js.org/topojson.v1.min.js"></script>
         <script src="d3-tip.js"></script>
         <script src="map.js"></script>
+
         <script src="scatterplots.js"></script>
+
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" charset="utf-8"></script>-->
+        <script src="../app/nv.d3.js"></script>
+        <script src="stackgraph.js"></script>
 
     </body>
 </html>
