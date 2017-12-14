@@ -3,10 +3,10 @@
 var width = document.body.clientWidth,
     height = document.body.clientHeight;
 
-var projection = d3.geoMercator()
+var projection = d3.geo.mercator()
     .scale(1)
     .translate([0, 0]);
-var path = d3.geoPath()
+var path = d3.geo.path()
     .projection(projection)
     .pointRadius(function() { return 1; });
 
@@ -23,15 +23,14 @@ svg.append("rect")
 var g = svg.append("g");
 var active = d3.select(null);
 
-var zoom = d3.zoom()
+var zoom = d3.behavior.zoom()
     .scaleExtent([0.5, 8])
-    .translateExtent([[0, 0], [width, height]])
     .on("zoom", zoomed);
 
 svg.call(zoom);
 
 function zoomed() {
-  g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+  // g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
   g.attr("transform", d3.event.transform);
 }
 
@@ -50,7 +49,9 @@ function focus(d) {
 
   svg.transition()
       .duration(750)
-      .call(zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale));
+      .call(
+          zoom.translate(translate)
+              .scale(scale));
 }
 
 function reset() {
@@ -79,7 +80,7 @@ svg.call(tip);
 // ------------------------------------------------------------------------------
 const provinceNames = [];
 d3.json("../data/provinces.json", function(error, data) {
-  var colour = d3.scaleOrdinal(d3.schemeCategory20);
+  var colour = d3.scale.ordinal(d3.schemeCategory20);
 
   // Center the map
   var l = topojson.feature(data, data.objects.subunits).features[3],
@@ -154,12 +155,13 @@ d3.json("../data/provinces.json", function(error, data) {
         .text("Temperature (C)");
 
     //Set scale for x-axis
-    var xScale = d3.scaleLinear()
+    var xScale = d3.scale.linear()
         .range([0, legendWidth])
         .domain([min, max]);
 
     //Define x-axis
-    var xAxis = d3.axisBottom()
+    var xAxis = d3.svg.axis()
+        .orient('bottom')
         .ticks(5)
         .scale(xScale);
 
@@ -203,7 +205,7 @@ function plotWeather(date, condition) {
   min -= 2;
   max += 2;
 
-  var color = d3.scaleLinear()
+  var color = d3.scale.linear()
       .domain([min, max])
       .range(["blue", "red"]);
 
@@ -216,12 +218,13 @@ function plotWeather(date, condition) {
 
   //Set scale for x-axis
   var legendWidth = width * 0.6;
-  var xScale = d3.scaleLinear()
+  var xScale = d3.scale.linear()
       .range([0, legendWidth])
       .domain([min, max]);
 
   //Define x-axis
-  var xAxis = d3.axisBottom()
+  var xAxis = d3.svg.axis()
+      .orient('bottom')
       .ticks(5)
       .scale(xScale);
 
