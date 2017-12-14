@@ -1,7 +1,94 @@
+body {
+    margin: 0;
+}
+
+#scatterPlotContainer {
+    width: 50%;
+    height: 100%;
+    float: left;
+
+    background: red;
+}
+
+#mapContainer {
+    width: 50%;
+    height: 66.666%;
+    display: inline-block;
+}
+
+#stackGraphContainer {
+    width: 50%;
+    height: 33.333%;
+}
+
+
+.map-toolbar {
+    position: fixed;
+}
+
 .background {
-    fill: none;
     pointer-events: all;
 }
 .active {
-    fill: orange;
+    stroke-width: 2 !important;
+    stroke: white;
 }
+
+.axisText text{
+    fill: white;
+}
+
+.province {
+    transition: all .2s ease-in-out;
+}
+.province:hover {
+    stroke-width: 1;
+}
+
+.station {
+    transform: scale(1,1);
+    transition: all .2s ease-in-out;
+}
+
+.station:hover {
+    fill: orange;
+    stroke: black;
+    transform: scale(1.0,1.0);
+}
+
+.track {
+    transition: all .2s ease-in-out;
+}
+.track:hover {
+    stroke: orange;
+}
+
+.d3-tip {
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+}
+
