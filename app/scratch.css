@@ -1,0 +1,19 @@
+#container {
+  height: 1000px;
+  width: 1100px;
+
+}
+
+div {
+    /*height: 40%;*/
+    /*width: 40%;*/
+    height: 400px;
+    width: 500px;
+    float: left;
+    border: solid;
+    border-color: black;
+    background-color: white;
+}
+body {
+    background-color: #aaa;
+}
