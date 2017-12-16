@@ -63,7 +63,7 @@ Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(data){ calculateFreq
 
 function processData(data, freq) {
 
-  console.log(data);
+  // console.log(data);
 
   windspeed = grouped(data.map(x => parseInt(x["Windspeed"] )));
   minsight = grouped(data.map(x => parseInt(x["Min Sight"] )));

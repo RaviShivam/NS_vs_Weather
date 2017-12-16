@@ -3342,6 +3342,7 @@ nv.models.focus = function(content) {
         ;
 
     window.brush = brush;
+    brush.on('brushend', window.onBrushEnd);
 
     var margin = {top: 10, right: 0, bottom: 30, left: 0}
         , color = nv.utils.defaultColor()
@@ -3436,6 +3437,7 @@ nv.models.focus = function(content) {
                 });
 
             brush.on('brushend', function () {
+                window.onBrushEnd();
                 if (!syncBrushing) {
                     dispatch.onBrush(brush.empty() ? x.domain() : brush.extent());
                 }
@@ -3570,7 +3572,6 @@ nv.models.focus = function(content) {
     chart.xAxis = xAxis;
     chart.yAxis = yAxis;
     chart.options = nv.utils.optionsFunc.bind(chart);
-    chart.brush = brush;
 
     chart._options = Object.create({}, {
         // simple options, just get/set the necessary values

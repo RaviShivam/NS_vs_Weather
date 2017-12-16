@@ -2,26 +2,37 @@ body {
     margin: 0;
 }
 
-#histoContainer {
-    width: 50%;
+#mapContainer {
+    width: 40%;
     height: 100%;
+    display: inline-block;
     float: left;
 }
 
-#mapContainer {
-    width: 50%;
+#histoContainer {
     height: 66.666%;
-    display: inline-block;
+
+    box-sizing: border-box;
+    border-bottom: 1px solid darkgrey;
 }
 
 #stackGraphContainer {
-    width: 50%;
     height: 33.333%;
 }
 
 .hist {
     width: 50%;
     float: left;
+    height: 50%;
+}
+
+.sidebar {
+    width: 60%;
+    height: 100%;
+    display: inline-block;
+
+    mix-blend-mode: multiply;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 
@@ -35,14 +46,28 @@ body {
 .active {
     stroke-width: 2 !important;
     stroke: white;
+    z-index: 10;
 }
 
-.axisText text{
+.legendBackground {
+    fill: rgba(0, 0, 0, 0.5);
+}
+.domain {
+    fill: rgba(0, 0, 0, 0);
+}
+.legendWrapper text{
     fill: white;
+    font: normal 12px Arial, sans-serif;
+    text-anchor: middle;
+}
+.legendTitle {
+    font-size: 16px !important;
+    font-weight: bold !important;
 }
 
 .province {
     transition: all .2s ease-in-out;
+    z-index: 1;
 }
 .province:hover {
     stroke-width: 1;

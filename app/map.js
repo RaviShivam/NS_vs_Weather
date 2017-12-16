@@ -1,7 +1,7 @@
 // ----------------- SETTING UP D3 STUFF ----------------------------------------
 // ------------------------------------------------------------------------------
-var width = document.body.clientWidth / 2,
-    height = document.body.clientHeight / 3 * 2;
+var width = document.body.clientWidth  * .4,
+    height = document.body.clientHeight;
 
 var projection = d3.geo.mercator()
     .scale(1)
@@ -17,7 +17,8 @@ svg.append("rect")
     .attr("class", "background")
     .attr("width", width)
     .attr("height", height)
-    .attr("fill", 'black')
+    .attr("fill", 'rgba(0, 0, 0, 0.08)')
+    .on('dragend', function(){  d3.event.preventDefault() })
     .on("click", reset);
 
 var g = svg.append("g");
@@ -57,13 +58,14 @@ function focus(d) {
 }
 
 function reset() {
+  if (d3.event && d3.event.defaultPrevented) return;
   active.classed("active", false);
   active = d3.select(null);
   g.transition()
       .duration(750)
-      .attr('transform', 'translate(' + [0.5, 0.5] + ') scale(1)');
-  zoom.scale(1);
-  zoom.translate([0.5, 0.5]);
+      .attr('transform', 'translate(' + [-width * .45, -height * .25] + ') scale(1.5)');
+  zoom.scale(1.5);
+  zoom.translate([-width * .45, -height * .25]);
 
 }
 
@@ -72,31 +74,27 @@ var provinceLayer = g.append("g");
 var trackLayer = g.append("g");
 var stationLayer = g.append("g");
 
+// Data variables
+const trainStationLookup = {};
+const provinceNames = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
+
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
 /* Initialize tooltip */
 var tip = d3.tip().attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function() {
-      return "<strong>" + capitalize(this.getAttribute("class")) + "</strong> <span style='color:red'>" + this.id + "</span>";
+      var text = this.id;
+      console.log(trainStationLookup);
+      var thisClass = this.getAttribute("class").split(' ')[0];
+      if (thisClass.indexOf('track') !== -1) { var split = text.toLowerCase().split('-'); text = trainStationLookup[split[0]] + ' - ' + trainStationLookup[split[1]]; }
+      return "<strong>" + capitalize(thisClass) + "</strong> <span style='color:red'>" + text + "</span>";
     });
 svg.call(tip);
 
 // ----------------- ADD MAP ----------------------------------------------------
 // ------------------------------------------------------------------------------
-const provinceNames = [
-    'Groningen',
-    'Friesland',
-    'Drenthe',
-    'Overijssel',
-    'Flevoland',
-    'Gelderland',
-    'Utrecht',
-    'Noord-Holland',
-    'Zuid-Holland',
-    'Zeeland',
-    'Noord-Brabant',
-    'Limburg'
-];
+
+
 d3.json("../data/provinces.json", function(error, data) {
   var colour = d3.scale.ordinal(d3.schemeCategory20);
 
@@ -118,10 +116,12 @@ d3.json("../data/provinces.json", function(error, data) {
       .attr("stroke-width", 0.2)
       .attr("class", "province")
       .attr("id", function(d) { return d.properties.name; })
-      .on('dragend', function(d){  d3.event.preventDefault() })
+      .on('dragend', function(){  d3.event.preventDefault() })
       .on("click", focus)
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
+
+  reset();
 
   const min = -10, max = 10;
 
@@ -148,6 +148,15 @@ d3.json("../data/provinces.json", function(error, data) {
     var legendsvg = svg.append("g")
         .attr("class", "legendWrapper axisText")
         .attr("transform", "translate(" + (width/2 - 10) + "," + (height+50) + ")");
+
+    var legBgPad = 8;
+    legendsvg.append("rect")
+        .attr("x", -legendWidth/2 - legBgPad)
+        .attr("y", 10 - legBgPad * 3)
+        .attr("width", legendWidth + 2 * legBgPad)
+        .attr("height", legendHeight + 6 * legBgPad)
+        .attr("class", "legendBackground");
+
     legendsvg.append("rect")
         .attr("x", -legendWidth/2)
         .attr("y", 10)
@@ -168,7 +177,7 @@ d3.json("../data/provinces.json", function(error, data) {
     legendsvg.append("text")
         .attr("class", "legendTitle")
         .attr("x", 0)
-        .attr("y", -2)
+        .attr("y", 2)
         .text("Temperature (C)");
 
     //Set scale for x-axis
@@ -272,6 +281,7 @@ d3.csv("../data/trainStations.csv", function(error, stations) {
 
   for (var i = 1; i < stations.length; i++) {
     const station = stations[i];
+    trainStationLookup[station.code.toLowerCase()] = station.name_long;
 
     if (station.country !== "NL") continue;
     stationsGeo.features.push({
@@ -455,6 +465,7 @@ function plotDisturbances(extent, types) {
 // ------------------------------------------------------------------------------
 function chooseMapDateExtent(extent) {
   var formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
+  console.log(formattedExtent);
   plotWeather(formattedExtent, 'Temperature');
   plotDisturbances(formattedExtent);
 }

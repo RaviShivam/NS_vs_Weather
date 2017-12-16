@@ -41,6 +41,10 @@ var histcatexplong =  [
 var colors = d3.scale.category20();
 var chart;
 
+window.onBrushEnd = function() {
+  chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
+}
+
 nv.addGraph(function() {
     chart = nv.models.stackedAreaWithFocusChart()
         .useInteractiveGuideline(true)
@@ -84,14 +88,6 @@ nv.addGraph(function() {
     // d3.selectAll(".resize").on("dragleave", function(d){
     //     console.log(d)
     // });
-
-
-    // Update map when date range is modified
-    window.brush.on('brushend', function() {
-        chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
-    });
-
-
     return chart;
 
 });
