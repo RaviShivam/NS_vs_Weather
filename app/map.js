@@ -142,13 +142,12 @@ d3.json("../data/provinces.json", function(error, data) {
     var legendWidth = width * 0.6,
         legendHeight = 10;
 
-    height -= 150;
+    height -= 100;
 
     //Color Legend container
     var legendsvg = svg.append("g")
-        .attr("class", "legendWrapper")
-        .attr("transform", "translate(" + (width/2 - 10) + "," + (height+50) + ")")
-        .attr("fill", "white");
+        .attr("class", "legendWrapper axisText")
+        .attr("transform", "translate(" + (width/2 - 10) + "," + (height+50) + ")");
     legendsvg.append("rect")
         .attr("x", -legendWidth/2)
         .attr("y", 10)

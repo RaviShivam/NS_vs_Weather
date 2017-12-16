@@ -2,12 +2,10 @@ body {
     margin: 0;
 }
 
-#scatterPlotContainer {
+#histoContainer {
     width: 50%;
     height: 100%;
     float: left;
-
-    background: red;
 }
 
 #mapContainer {
@@ -19,6 +17,11 @@ body {
 #stackGraphContainer {
     width: 50%;
     height: 33.333%;
+}
+
+.hist {
+    width: 50%;
+    float: left;
 }
 
 

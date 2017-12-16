@@ -10,19 +10,24 @@
 
     <body>
         <div class="container">
-            <div id="scatterPlotContainer"></div>
+            <div id="histoContainer">
+                <div class="hist" id="histo1"></div>
+                <div class="hist" id="histo2"></div>
+                <div class="hist" id="histo3"></div>
+                <div class="hist" id="histo4"></div>
+            </div>
 
             <div id="mapContainer"></div>
 
             <svg id="stackGraphContainer"></svg>
-
         </div>
 
         <!-- General libraries -->
         <script src="http://d3js.org/d3.v3.min.js"></script>
 
-        <!-- Scatterplot code & libraries -->
-        <script src="scatterplots.js"></script>
+        <!-- Histograms code & libraries -->
+        <script src="plotly-latest.min.js"></script>
+        <script src="histo.js"></script>
 
         <!-- Map code & libraries -->
         <script src="http://d3js.org/topojson.v1.min.js"></script>

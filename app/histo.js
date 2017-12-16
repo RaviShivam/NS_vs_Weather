@@ -15,7 +15,7 @@ function grouped(arr) {
     return [a, b];
 }
 
-function countKeys()
+// function countKeys()
 
 function dateIsBetween(x, date1, date2) {
   months = {
@@ -137,8 +137,8 @@ var histo4 = {
     };
   }
 
-    Plotly.newPlot('myDiv1', [histo1], layout(x1, y1), {displayModeBar: false});
-    Plotly.newPlot('myDiv2', [histo2], layout(x2, y2), {displayModeBar: false});
-    Plotly.newPlot('myDiv3', [histo3], layout(x3, y3), {displayModeBar: false});
-    Plotly.newPlot('myDiv4', [histo4], layout(x4, y4), {displayModeBar: false});
+    Plotly.newPlot('histo1', [histo1], layout(x1, y1), {displayModeBar: false});
+    Plotly.newPlot('histo2', [histo2], layout(x2, y2), {displayModeBar: false});
+    Plotly.newPlot('histo3', [histo3], layout(x3, y3), {displayModeBar: false});
+    Plotly.newPlot('histo4', [histo4], layout(x4, y4), {displayModeBar: false});
 }
