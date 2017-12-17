@@ -66,7 +66,8 @@ function throttle(fn, threshhold, scope) {
 var chooseDateExtent = throttle(function () {
     window.dateExtent = [new Date(window.timeRange[0]), new Date(window.timeRange[1])];
     chooseMapDateExtent(window.dateExtent);
-  }, 250);
+    updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
+  }, 500);
 
 
 window.onBrushEnd = function() {

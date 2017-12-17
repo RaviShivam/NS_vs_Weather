@@ -1,3 +1,6 @@
+histogramData = [];
+plotDivs = ['histo1','histo2','histo3','histo4']
+
 function grouped(arr) {
     var a = [], b = [], prev;
 
@@ -11,88 +14,111 @@ function grouped(arr) {
         }
         prev = arr[i];
     }
-
     return [a, b];
 }
 
-// function countKeys()
+function updateHistograms(date1, date2, categories) {
+  var data = histogramData;
+  if(date1 && date2) {
+    data = data.filter(x => dateIsBetween(x["Date"], date1, date2));
+  }
+  if(categories.length > 0) {
+    data = data.filter(x => categories.includes(x["Cause Group"]));
+  }
+  plotDivs.forEach(function(item){Plotly.purge(item)});
+  processData(data);
+  return data;
+}
 
 function dateIsBetween(x, date1, date2) {
   months = {
-    "Jan": 0,
-    "Feb": 1,
-    "Mar": 2,
-    "Apr": 3,
-    "May": 4,
-    "Jun": 5,
-    "Jul": 6,
-    "Aug": 7,
-    "Sep": 8,
-    "Oct": 9,
-    "Nov": 10,
-    "Dec": 11,
+    "Jan": "-01-",
+    "Feb": "-02-",
+    "Mar": "-03-",
+    "Apr": "-04-",
+    "May": "-05-",
+    "Jun": "-06-",
+    "Jul": "-07-",
+    "Aug": "-08-",
+    "Sep": "-09-",
+    "Oct": "-10-",
+    "Nov": "-11-",
+    "Dec": "-12-",
   };
 
-  // From date to aproximated amount of days.
-  dx = parseInt(x.substr(0,2)) +
-  ( parseInt(months[x.substr(3,3)]) * 31) +
-  ( parseInt(x.substr(7,2)) * 375 );
-  d1 = parseInt(date1.substr(0,2)) +
-  ( parseInt(months[date1.substr(3,3)]) * 31) +
-  ( parseInt(date1.substr(7,2)) * 375 );
-  d2 = parseInt(date2.substr(0,2)) +
-  ( parseInt(months[date2.substr(3,3)]) * 31) +
-  ( parseInt(date2.substr(7,2)) * 375 );
-  console.log(dx,d1,d2);
-  return d1 <= dx && dx <= d2;
+  xdate = new Date("20" + x.substr(7,2) + months[x.substr(3,3)] + x.substr(0,2));
+
+  pre = date1;
+  post = date2;
+  return pre <= xdate && xdate <= post;
 }
 
-// function oprotten(data) {
-//   return data;
-// }
+function processData(disturbances) {
+  Plotly.d3.csv("../data/processedWeather.csv", function(weather){
+    mintempfreq = grouped(weather.map(x => parseInt(x["min_temp"])));
+    avgtempfreq = grouped(weather.map(x => parseInt(x["avg_temp"])));
+    maxwindgustfreq = grouped(weather.map(x => parseInt(x["max_windgust"])));
+    totalprecipitationfreq = grouped(weather.map(x => parseInt(x["total_precipitation"])));
+    humidityfreq = grouped(weather.map(x => parseInt(x["humidity"])));
+    windspeedreq = grouped(weather.map(x => parseInt(x["windspeed"])));
+    minsightreq = grouped(weather.map(x => parseInt(x["min_sight"])));
 
-function calculateFrequencies(disturbances, key) {
-  Plotly.d3.csv("../data/processedWeather.csv", function(data2){
-    // tempfrequency = grouped(data.map(x => parseInt(x["min_temp"])));
-    processData(disturbances, []);
-    // processData(data, tempfrequency);
+    // plot(disturbances, []);
+    frequencies = {
+      "Min Temp": mintempfreq,
+      "Avg Temp": avgtempfreq,
+      "Max Windgust": maxwindgustfreq,
+      "Total Precipitation": totalprecipitationfreq,
+      "Humidity": humidityfreq,
+      "Windspeed": windspeedreq,
+      "Min Sight": minsightreq
+    }
+    plot(disturbances, frequencies);
   });
 }
 
-Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(data){ calculateFrequencies(data) } );
+Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
+  histogramData = disturbances;
+  processData(disturbances);
+});
 
-function processData(data, freq) {
-
-  // console.log(data);
+function plot(data, freq) {
 
   windspeed = grouped(data.map(x => parseInt(x["Windspeed"] )));
   minsight = grouped(data.map(x => parseInt(x["Min Sight"] )));
   windgust = grouped(data.map(x => parseInt(x["Max Windgust"] )));
-  mintemp = grouped(data.map(x => parseInt(x["Min Temp"])));
+  mintemp = grouped(data.map(x => parseInt(x["Min Temp"] )));
+  avgtemp = grouped(data.map(x => parseInt(x["Avg Temp"] )));
   humidity = grouped(data.map(x => parseInt(x["Humidity"] )));
+  totalprecipitation = grouped(data.map(x => parseInt(x["Total Precipitation"] )));
 
-  // Normalize
-  // mintemp.forEach(function(item) {
-  //
-  // });
-  // //
-  // var counted = 0;
-  // function count(item) {
-  //   if(item === -15) {
-  //     counted++;
-  //   }
-  // }
-  // mintemp.forEach(count);
-  // console.log(counted);
+  windspeed.label = "Windspeed";
+  minsight.label = "Min Sight";
+  windgust.label = "Max Windgust";
+  mintemp.label = "Min Temp";
+  avgtemp.label = "Avg Temp";
+  humidity.label = "Humidity";
+  totalprecipitation.label = "Total Precipitation";
+
+  [windspeed, minsight, windgust, mintemp, avgtemp, humidity, totalprecipitation]
+    .forEach(function(column) {
+      for (var i = 0; i < column[1].length; i++) {
+        column[1][i] = column[1][i] / freq[column.label][1][i];
+      }
+  });
 
   x1 = { data: mintemp[0], label: "Min Temp" };
-  y1 = { data: mintemp[1], label: "Count" };
+  y1 = { data: mintemp[1], label: "Average amount of disturbances" };
   x2 = { data: minsight[0], label: "Min Sight" };
-  y2 = { data: minsight[1], label: "Count" };
+  y2 = { data: minsight[1], label: "Average amount of disturbances" };
   x3 = { data: windgust[0], label: "Max Windgust" };
-  y3 = { data: windgust[1], label: "Count" };
+  y3 = { data: windgust[1], label: "Average amount of disturbances" };
   x4 = { data: humidity[0], label: "Humidity" };
-  y4 = { data: humidity[1], label: "Count" };
+  y4 = { data: humidity[1], label: "Average amount of disturbances" };
+  x4 = { data: avgtemp[0], label: "Avg Temp" };
+  y4 = { data: avgtemp[1], label: "Average amount of disturbances" };
+  x2 = { data: totalprecipitation[0], label: "Total Precipitation" };
+  y2 = { data: totalprecipitation[1], label: "Average amount of disturbances" };
   // y = {
   //   data: minsight,
   //   label: "Min Sight"
@@ -111,6 +137,10 @@ var histo2 = {
   type: 'bar'
   // marker: {color: 'rgb(102,0,0)'},
 };
+
+window.histo1 = histo1;
+window.histo2 = histo2;
+
 
 var histo3 = {
   y: y3.data,
@@ -137,8 +167,8 @@ var histo4 = {
     };
   }
 
-    Plotly.newPlot('histo1', [histo1], layout(x1, y1), {displayModeBar: false});
-    Plotly.newPlot('histo2', [histo2], layout(x2, y2), {displayModeBar: false});
-    Plotly.newPlot('histo3', [histo3], layout(x3, y3), {displayModeBar: false});
-    Plotly.newPlot('histo4', [histo4], layout(x4, y4), {displayModeBar: false});
+  Plotly.newPlot('histo1', [histo1], layout(x1, y1), {displayModeBar: false});
+  Plotly.newPlot('histo2', [histo2], layout(x2, y2), {displayModeBar: false});
+  Plotly.newPlot('histo3', [histo3], layout(x3, y3), {displayModeBar: false});
+  Plotly.newPlot('histo4', [histo4], layout(x4, y4), {displayModeBar: false});
 }
