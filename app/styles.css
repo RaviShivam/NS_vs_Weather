@@ -55,6 +55,9 @@ body {
 .domain {
     fill: rgba(0, 0, 0, 0);
 }
+.tick line {
+    stroke: black;
+}
 .legendWrapper text{
     fill: white;
     font: normal 12px Arial, sans-serif;
@@ -118,5 +121,9 @@ body {
     margin: -1px 0 0 0;
     top: 100%;
     left: 0;
+}
+
+.d3-tip span {
+    color: red;
 }
 

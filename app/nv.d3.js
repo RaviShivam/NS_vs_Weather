@@ -3342,7 +3342,8 @@ nv.models.focus = function(content) {
         ;
 
     window.brush = brush;
-    brush.on('brushend', window.onBrushEnd);
+    // brush.on('brushend', window.onBrushEnd);
+    // brush.on('brush', window.onBrush);
 
     var margin = {top: 10, right: 0, bottom: 30, left: 0}
         , color = nv.utils.defaultColor()
@@ -3433,6 +3434,7 @@ nv.models.focus = function(content) {
             brush
                 .x(x)
                 .on('brush', function() {
+                    // window.onBrush();
                     onBrush(syncBrushing);
                 });
 
@@ -5959,6 +5961,7 @@ nv.models.stackedAreaChart = function() {
             function onBrush(extent) {
                 // Update Main (Focus)
                 window.timeRange = extent;
+                window.onBrush();
 
                 var stackedWrap = g.select('.nv-focus .nv-stackedWrap')
                     .datum(

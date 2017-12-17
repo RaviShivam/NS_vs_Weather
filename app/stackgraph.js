@@ -41,9 +41,37 @@ var histcatexplong =  [
 var colors = d3.scale.category20();
 var chart;
 
-window.onBrushEnd = function() {
-  chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
+function throttle(fn, threshhold, scope) {
+  threshhold || (threshhold = 250);
+  var last,
+      deferTimer;
+  return function () {
+    var context = scope || this;
+
+    var now = +new Date,
+        args = arguments;
+    if (last && now < last + threshhold) {
+      // hold on to it
+      clearTimeout(deferTimer);
+      deferTimer = setTimeout(function () {
+        last = now;
+        fn.apply(context, args);
+      }, threshhold);
+    } else {
+      last = now;
+      fn.apply(context, args);
+    }
+  };
 }
+var chooseDateExtent = throttle(function () {
+    chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
+  }, 250);
+
+
+window.onBrushEnd = function() {
+  // chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
+};
+window.onBrush = chooseDateExtent;
 
 nv.addGraph(function() {
     chart = nv.models.stackedAreaWithFocusChart()
@@ -55,11 +83,6 @@ nv.addGraph(function() {
 
 
     chart.brushExtent([1293843600000, 1504227600000]);
-
-
-
-
-
 
     chart.xAxis.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
     chart.x2Axis.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });

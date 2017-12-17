@@ -76,18 +76,29 @@ var stationLayer = g.append("g");
 
 // Data variables
 const trainStationLookup = {};
+var trackData = {};
 const provinceNames = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
+var disturbancesCF, disturbancesByDay,
+    weatherCF, weatherByDay, weatherByProvince, weatherProvinceGrouping;
 
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
 /* Initialize tooltip */
 var tip = d3.tip().attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function() {
-      var text = this.id;
-      console.log(trainStationLookup);
       var thisClass = this.getAttribute("class").split(' ')[0];
-      if (thisClass.indexOf('track') !== -1) { var split = text.toLowerCase().split('-'); text = trainStationLookup[split[0]] + ' - ' + trainStationLookup[split[1]]; }
-      return "<strong>" + capitalize(thisClass) + "</strong> <span style='color:red'>" + text + "</span>";
+      console.log(thisClass);
+      var text = "<strong>" + capitalize(thisClass) + "</strong> <span>" + this.id + '</span>';
+      if (thisClass.indexOf('track') !== -1) {
+        var split = this.id.toLowerCase().split('-');
+        text = "<strong>" + capitalize(thisClass) + "</strong> <span>" + trainStationLookup[split[0]] + ' - ' + trainStationLookup[split[1]] + "</span>";
+        if (this.id in trackData.tracks) {
+          text += '<br /><strong>Disturbances</strong> <span>' + trackData.tracks[this.id].count + '</span>';
+          text += '<br /><strong>Total duration (h)</strong> <span>' + Math.round(trackData.tracks[this.id].totalDuration / 60) + '</span>';
+          text += '<br /><strong>Average duration (h)</strong> <span>' + Math.round((trackData.tracks[this.id].totalDuration / 60) / trackData.tracks[this.id].count * 10)/10 + '</span>';
+        }
+      }
+      return text;
     });
 svg.call(tip);
 
@@ -203,7 +214,18 @@ d3.json("../data/provinces.json", function(error, data) {
 var weatherData = [];
 d3.csv("../data/weatherPerProvince.csv", function(error, data) {
   weatherData = data;
-  plotWeather(['20130101', '20170101'], 'Temperature');
+  weatherCF = crossfilter(data);
+  weatherByDay = weatherCF.dimension(function(d) { return d.YYYYMMDD });
+  weatherByProvince = weatherCF.dimension(function(d) { return d.PROVINCE });
+
+  // Group by province, find minimum temperature
+  function reduceAdd(p, v) {return Math.min(p, parseInt(v.TG) / 10); }
+  function reduceRemove(p, v) { return p }
+  function reduceInitial() { return 100; }
+  weatherProvinceGrouping = weatherByProvince.group(function(d) { return d; });
+  weatherProvinceGrouping.reduce(reduceAdd, reduceRemove, reduceInitial);
+
+  plotWeather(['20100101', '20180101'], 'Temperature');
 });
 
 function convertDate(inputFormat, seperator) {
@@ -212,30 +234,44 @@ function convertDate(inputFormat, seperator) {
   return [d.getFullYear(), pad(d.getMonth()+1), pad(d.getDate())].join(seperator || '');
 }
 
-function plotWeather(extent, condition) {
+function plotWeather(formattedExtent, condition) {
 
   // Weather condition as color
   const provinceData = {};
 
-  const dateWeather = weatherData.filter(function(a) { return a['YYYYMMDD'] > extent[0] && a['YYYYMMDD'] < extent[1] });
-
   var min = 10000, max = -10000;
-  provinceNames.forEach(function (province) {
-    const provinceWeather = dateWeather.filter(function(a) { return a.PROVINCE === province });
+  if (false) {
+    weatherByDay.filterAll();
+    weatherByDay.filter(formattedExtent);
+    console.log(weatherByDay.top(Infinity));
+    var grouped = weatherProvinceGrouping.all();
+    console.log('fast');
+    grouped.forEach(function (item) {
+      min = Math.min(min, item.value) || min;
+      max = Math.max(max, item.value) || max;
+      provinceData[item.key] = item.value;
+    });
+  } else {
+    const dateWeather = weatherData.filter(function(a) { return a['YYYYMMDD'] > formattedExtent[0] && a['YYYYMMDD'] < formattedExtent[1] });
 
-    var sum = 0;
-    var minProv = 100;
-    provinceWeather.forEach(function (item) { minProv = Math.min(minProv, parseInt(item.TG) / 10); });
+    provinceNames.forEach(function (province) {
+      const provinceWeather = dateWeather.filter(function(a) { return a.PROVINCE === province });
 
-    if (minProv !== 100)
-      provinceData[province] = minProv;
+      var sum = 0;
+      var minProv = 100;
+      provinceWeather.forEach(function (item) { minProv = Math.min(minProv, parseInt(item.TG) / 10); });
 
-    min = Math.min(min, provinceData[province]) || min;
-    max = Math.max(max, provinceData[province]) || max;
-  });
+      if (minProv !== 100)
+        provinceData[province] = minProv;
 
+      min = Math.min(min, provinceData[province]) || min;
+      max = Math.max(max, provinceData[province]) || max;
+    });
+  }
   min -= 2;
   max += 2;
+
+  console.log(provinceData);
 
   var color = d3.scale.linear()
       .domain([min, max])
@@ -372,11 +408,8 @@ function filterType(e) {
 var disturbances = [];
 d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
   disturbances = data;
-
-  const trackData = getDisturbancesPerTrack(data);
-  const tracks = trackData.tracks;
-  const maxDuration = trackData.maxDuration;
-  const maxCount = trackData.maxCount;
+  disturbancesCF = crossfilter(data);
+  disturbancesByDay = disturbancesCF.dimension(function(d) { return d.start_time.split(' ')[0].split('-').join(''); });
 
   // Add tracks/lines
   d3.json("../data/tracks.geojson", function(error, data) {
@@ -387,16 +420,19 @@ d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
         .attr("d", path)
         .attr("class", "track")
         .attr("id", function(d) { var f = d.properties.from; var t = d.properties.to; return f < t ? (f + '-' + t) : (t + '-' + f) }) // alphabetic order
-        .attr("stroke", "yellow")
-        .attr("stroke-width", function() { return 0.5 + (this.id in tracks ? (3 * tracks[this.id].count / maxCount): 0)})
+        .attr("stroke", "gray")
+        .attr("stroke-width", 0.5)
         .attr("fill", "none")
-        .on("click", function(d) { focus.bind(this)(d); console.log(this.id); })
+        .on("click", function(d) { focus.bind(this)(d); })
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide);
   });
+
+  setTimeout(function() { plotDisturbances(['20110101', '20170901']); }, 200);
 });
 
 function getDisturbancesPerTrack(distSubset) {
+  // Todo: REDUCE
   const tracks = {};
   for (var i = 1; i < distSubset.length; i++) {
     const seperateLines = distSubset[i].lines.split(' ');
@@ -432,22 +468,20 @@ function getDisturbancesPerTrack(distSubset) {
   };
 }
 
-function plotDisturbances(extent, types) {
-  var dateDisturbances = [];
+function plotDisturbances(formattedExtent, types) {
+  console.log(disturbances.length);
+  if (disturbances.length === 0) return;
 
+  disturbancesByDay.filterAll();
+  disturbancesByDay.filter(formattedExtent);
+  var dateDisturbances = disturbancesByDay.top(Infinity);
 
-  for (var i = 0; i < disturbances.length; i++) {
-    var startTime = disturbances[i]['start_time'].split(' ')[0].split('-');
-    var dDate = convertDate(new Date(startTime[0], startTime[1], startTime[2]));
-
-    if (dDate > extent[1]) break;
-    if (dDate >= extent[0]) dateDisturbances.push(disturbances[i]);
-  }
-
-  const trackData = getDisturbancesPerTrack(dateDisturbances);
+  trackData = getDisturbancesPerTrack(dateDisturbances);
   const tracks = trackData.tracks;
   const maxDuration = trackData.maxDuration;
   const maxCount = trackData.maxCount;
+
+  console.log(dateDisturbances.length, trackData);
 
   // Deselect/select tracks from this date
   d3.selectAll('.track')
@@ -460,12 +494,10 @@ function plotDisturbances(extent, types) {
   });
 }
 
-
 // ----------------- BIND FUNCTIONS TO UI ---------------------------------------
 // ------------------------------------------------------------------------------
 function chooseMapDateExtent(extent) {
   var formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
-  console.log(formattedExtent);
   plotWeather(formattedExtent, 'Temperature');
   plotDisturbances(formattedExtent);
 }
