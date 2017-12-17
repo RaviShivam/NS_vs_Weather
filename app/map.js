@@ -78,7 +78,7 @@ var stationLayer = g.append("g");
 const trainStationLookup = {};
 var trackData = {};
 const provinceNames = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
-var disturbancesCF, disturbancesByDay,
+var disturbancesCF, disturbancesByDay, disturbancesByCauseGroup, disturbancesByLine, disturbancesTrackGrouping,
     weatherCF, weatherByDay, weatherByProvince, weatherProvinceGrouping;
 
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
@@ -87,7 +87,6 @@ var tip = d3.tip().attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function() {
       var thisClass = this.getAttribute("class").split(' ')[0];
-      console.log(thisClass);
       var text = "<strong>" + capitalize(thisClass) + "</strong> <span>" + this.id + '</span>';
       if (thisClass.indexOf('track') !== -1) {
         var split = this.id.toLowerCase().split('-');
@@ -243,9 +242,8 @@ function plotWeather(formattedExtent, condition) {
   if (false) {
     weatherByDay.filterAll();
     weatherByDay.filter(formattedExtent);
-    console.log(weatherByDay.top(Infinity));
+    // console.log(weatherByDay.top(Infinity));
     var grouped = weatherProvinceGrouping.all();
-    console.log('fast');
     grouped.forEach(function (item) {
       min = Math.min(min, item.value) || min;
       max = Math.max(max, item.value) || max;
@@ -270,8 +268,6 @@ function plotWeather(formattedExtent, condition) {
   }
   min -= 2;
   max += 2;
-
-  console.log(provinceData);
 
   var color = d3.scale.linear()
       .domain([min, max])
@@ -410,6 +406,27 @@ d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
   disturbances = data;
   disturbancesCF = crossfilter(data);
   disturbancesByDay = disturbancesCF.dimension(function(d) { return d.start_time.split(' ')[0].split('-').join(''); });
+  disturbancesByCauseGroup = disturbancesCF.dimension(function(d) { return d.cause_group });
+  // disturbancesByLine = disturbancesCF.dimension(function(d) {
+  //   // Return array of all tracks
+  //   return [].concat.apply([], d.split(' ').map(function(line) {
+  //     var lineTracks = line.split('-');
+  //     const tracks = [];
+  //     for (var j = 0; j < lineTracks.length - 1; j++) {
+  //       const f = lineTracks[j];
+  //       const t = lineTracks[j + 1];
+  //       const track = f < t ? (f + '-' + t) : (t + '-' + f); // sort alphabetically
+  //       tracks.push(track);
+  //     }
+  //     return tracks;
+  //   }));
+  // });
+
+  function reduceAdd(p, v) {return p + 1 }
+  function reduceRemove(p, v) { return p - 1 }
+  function reduceInitial() { return 0; }
+  disturbancesTrackGrouping = weatherByProvince.group(function(d) { return d; });
+  weatherProvinceGrouping.reduce(reduceAdd, reduceRemove, reduceInitial);
 
   // Add tracks/lines
   d3.json("../data/tracks.geojson", function(error, data) {
@@ -469,19 +486,18 @@ function getDisturbancesPerTrack(distSubset) {
 }
 
 function plotDisturbances(formattedExtent, types) {
-  console.log(disturbances.length);
   if (disturbances.length === 0) return;
 
   disturbancesByDay.filterAll();
   disturbancesByDay.filter(formattedExtent);
   var dateDisturbances = disturbancesByDay.top(Infinity);
 
+  dateDisturbances = dateDisturbances.filter(function(d) { return !(d.cause_group in window.types) ? true : window.types[d.cause_group]});
+
   trackData = getDisturbancesPerTrack(dateDisturbances);
-  const tracks = trackData.tracks;
+  var tracks = trackData.tracks;
   const maxDuration = trackData.maxDuration;
   const maxCount = trackData.maxCount;
-
-  console.log(dateDisturbances.length, trackData);
 
   // Deselect/select tracks from this date
   d3.selectAll('.track')
@@ -500,4 +516,7 @@ function chooseMapDateExtent(extent) {
   var formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
   plotWeather(formattedExtent, 'Temperature');
   plotDisturbances(formattedExtent);
+}
+function chooseMapTypes(types) {
+  plotDisturbances(types);
 }

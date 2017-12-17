@@ -64,7 +64,8 @@ function throttle(fn, threshhold, scope) {
   };
 }
 var chooseDateExtent = throttle(function () {
-    chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
+    window.dateExtent = [new Date(window.timeRange[0]), new Date(window.timeRange[1])];
+    chooseMapDateExtent(window.dateExtent);
   }, 250);
 
 
@@ -72,6 +73,16 @@ window.onBrushEnd = function() {
   // chooseMapDateExtent([new Date(window.timeRange[0]), new Date(window.timeRange[1])]);
 };
 window.onBrush = chooseDateExtent;
+window.chooseTypes = function(state) {
+  var types = {};
+  histcatexplong.forEach(function (item, i) {
+    types[item.key] = !state.disabled[i];
+  });
+  window.types = types;
+  // chooseMapTypes(types);
+  chooseMapDateExtent(window.dateExtent);
+};
+window.types = {};
 
 nv.addGraph(function() {
     chart = nv.models.stackedAreaWithFocusChart()

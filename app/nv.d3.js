@@ -5799,8 +5799,10 @@ nv.models.stackedAreaChart = function() {
             });
 
             legend.dispatch.on('stateChange', function(newState) {
+
                 for (var key in newState)
                     state[key] = newState[key];
+                window.chooseTypes(newState);
                 dispatch.stateChange(state);
                 chart.update();
             });
