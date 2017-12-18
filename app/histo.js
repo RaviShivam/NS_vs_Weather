@@ -1,5 +1,5 @@
 histogramData = [];
-plotDivs = ['histo1','histo2','histo3','histo4']
+plotDivs = ['histo1','histo2','histo3','histo4','histo5','histo6'];
 
 function grouped(arr) {
     var a = [], b = [], prev;
@@ -83,7 +83,6 @@ Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
 });
 
 function plot(data, freq) {
-
   windspeed = grouped(data.map(x => parseInt(x["Windspeed"] )));
   minsight = grouped(data.map(x => parseInt(x["Min Sight"] )));
   windgust = grouped(data.map(x => parseInt(x["Max Windgust"] )));
@@ -100,75 +99,35 @@ function plot(data, freq) {
   humidity.label = "Humidity";
   totalprecipitation.label = "Total Precipitation";
 
-  [windspeed, minsight, windgust, mintemp, avgtemp, humidity, totalprecipitation]
-    .forEach(function(column) {
-      for (var i = 0; i < column[1].length; i++) {
-        column[1][i] = column[1][i] / freq[column.label][1][i];
+  features = [windspeed, windgust, minsight, mintemp, avgtemp, humidity, totalprecipitation];
+
+  //Normalize all features, set the plotting attributes and layout per plot.
+  features.forEach(function(feature) {
+      for (var i = 0; i < feature[1].length; i++) {
+        feature[1][i] = feature[1][i] / freq[feature.label][1][i];
       }
-  });
-
-  x1 = { data: mintemp[0], label: "Min Temp" };
-  y1 = { data: mintemp[1], label: "Average amount of disturbances" };
-  x2 = { data: minsight[0], label: "Min Sight" };
-  y2 = { data: minsight[1], label: "Average amount of disturbances" };
-  x3 = { data: windgust[0], label: "Max Windgust" };
-  y3 = { data: windgust[1], label: "Average amount of disturbances" };
-  x4 = { data: humidity[0], label: "Humidity" };
-  y4 = { data: humidity[1], label: "Average amount of disturbances" };
-  x4 = { data: avgtemp[0], label: "Avg Temp" };
-  y4 = { data: avgtemp[1], label: "Average amount of disturbances" };
-  x2 = { data: totalprecipitation[0], label: "Total Precipitation" };
-  y2 = { data: totalprecipitation[1], label: "Average amount of disturbances" };
-  // y = {
-  //   data: minsight,
-  //   label: "Min Sight"
-  // };
-
-var histo1 = {
-  y: y1.data,
-  x: x1.data,
-  type: 'bar'
-  // marker: {color: 'rgb(102,0,0)'},
-};
-
-var histo2 = {
-  y: y2.data,
-  x: x2.data,
-  type: 'bar'
-  // marker: {color: 'rgb(102,0,0)'},
-};
-
-window.histo1 = histo1;
-window.histo2 = histo2;
-
-
-var histo3 = {
-  y: y3.data,
-  x: x3.data,
-  type: 'bar'
-  // marker: {color: 'rgb(102,0,0)'},
-};
-
-var histo4 = {
-  y: y4.data,
-  x: x4.data,
-  type: 'bar'
-  // marker: {color: 'rgb(102,0,0)'},
-  };
-
-  function layout(_x, _y) {
-    return {
+    feature.bars = {
+      x: feature[0],
+      y: feature[1],
+      type: "bar",
+    };
+    feature.layout = {
       bargap: 0.05,
       bargroupgap: 0.2,
       barmode: "overlay",
-      // // title: "Min Temp",
-      xaxis: {title: _x.label},
-      yaxis: {title: _y.label}
+      xaxis: {
+        title: feature.label,
+        fixedrange: true
+      },
+      yaxis: {
+        title: "Average amount of disturbances",
+        fixedrange: true
+      }
     };
-  }
+  });
 
-  Plotly.newPlot('histo1', [histo1], layout(x1, y1), {displayModeBar: false});
-  Plotly.newPlot('histo2', [histo2], layout(x2, y2), {displayModeBar: false});
-  Plotly.newPlot('histo3', [histo3], layout(x3, y3), {displayModeBar: false});
-  Plotly.newPlot('histo4', [histo4], layout(x4, y4), {displayModeBar: false});
+  // Plot the data.
+  for (var i = 0; i < features.length; i++) {
+    Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
+  }
 }

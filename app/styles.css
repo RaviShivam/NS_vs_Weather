@@ -21,7 +21,7 @@ body {
 }
 
 .hist {
-    width: 50%;
+    width: 33.333%;
     float: left;
     height: 50%;
 }
@@ -126,4 +126,3 @@ body {
 .d3-tip span {
     color: red;
 }
-
