@@ -32,7 +32,6 @@ function grouped(arr) {
 function updateHistograms(date1, date2, categories) {
   var data = histogramData;
   if(data.length > 0) {
-    console.log("called");
     if(date1 && date2) {
       data = data.filter(x => dateIsBetween(x["Date"], date1, date2));
     }
@@ -67,7 +66,6 @@ function dateIsBetween(x, date1, date2) {
 
 function processData(disturbances) {
 
-    console.log(histoWeatherData);
     mintempfreq = grouped(histoWeatherData.map(x => parseInt(x["min_temp"])));
     avgtempfreq = grouped(histoWeatherData.map(x => parseInt(x["avg_temp"])));
     maxwindgustfreq = grouped(histoWeatherData.map(x => parseInt(x["max_windgust"])));

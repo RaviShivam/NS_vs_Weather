@@ -66,7 +66,7 @@ function throttle(fn, threshhold, scope) {
 var chooseDateExtent = throttle(function () {
     window.dateExtent = [new Date(window.timeRange[0]), new Date(window.timeRange[1])];
     chooseMapDateExtent(window.dateExtent);
-    updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
+    // updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
   }, 500);
 
 
@@ -93,6 +93,8 @@ nv.addGraph(function() {
         .controlLabels({stacked: "Stacked"})
         .duration(300);
 
+    window.stackGraphChart = chart;
+
     chart.brushExtent([1293843600000, 1504227600000]);
 
     chart.xAxis.tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
@@ -102,24 +104,18 @@ nv.addGraph(function() {
 
     chart.legend.vers('furious');
 
-    // data = d3.csv("delays.csv", function(d) {
-    //
-    // })
-    d3.select('#stackGraphContainer')
-        .datum(histcatexplong)
-        .transition().duration(1000)
-        .call(chart)
-        .each('start', function() {
-            setTimeout(function() {
-                d3.selectAll('#stackGraphContainer *').each(function() {
-                    if(this.__transition__)
-                        this.__transition__.duration = 4;
-                })
-            }, 0)
-        });
-    // nv.utils.windowResize(chart.update);
-    // d3.selectAll(".resize").on("dragleave", function(d){
-    //     console.log(d)
-    // });
+    // d3.select('#stackGraphContainer')
+    //     .datum(histcatexplong)
+    //     .transition().duration(1000)
+    //     .call(chart)
+    //     .each('start', function() {
+    //         setTimeout(function() {
+    //             d3.selectAll('#stackGraphContainer *').each(function() {
+    //                 if(this.__transition__)
+    //                     this.__transition__.duration = 4;
+    //             })
+    //         }, 0)
+    //     });
+    nv.utils.windowResize(chart.update);
     return chart;
 });
