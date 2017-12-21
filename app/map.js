@@ -38,7 +38,10 @@ function zoomed() {
 
 function focus(d) {
   if (d3.event.defaultPrevented) return;
-  if (active.node() === this) return reset();
+
+  if (active.node() === this) {
+    return reset();
+  }
   active.classed("active", false);
   active = d3.select(this).classed("active", true);
 
@@ -55,10 +58,15 @@ function focus(d) {
       .attr('transform', 'translate(' + translate + ')' + " scale(" + scale + ")");
   zoom.scale(scale);
   zoom.translate(translate);
+
+  if (this.getAttribute('class').indexOf('province') !== -1) {
+    onFilter(null, [this.id]);
+  }
 }
 
 function reset() {
   if (d3.event && d3.event.defaultPrevented) return;
+  var node = active.node();
   active.classed("active", false);
   active = d3.select(null);
   g.transition()
@@ -67,6 +75,9 @@ function reset() {
   zoom.scale(1.5);
   zoom.translate([-width * .45, -height * .25]);
 
+  if (node && node.getAttribute('class').indexOf('province') !== -1) {
+    onFilter(null, []);
+  }
 }
 
 // Setup layer order
@@ -129,7 +140,7 @@ d3.json("../data/provinces.json", function(error, data) {
       .attr("class", "province")
       .attr("id", function(d) { return d.properties.name; })
       .on('dragend', function(){  d3.event.preventDefault() })
-      .on("click", focus)
+      .on("click", function(d) { focus.bind(this)(d); })
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
 
