@@ -125,9 +125,26 @@ function plot(data, freq) {
       }
     };
   });
-
   // Plot the data.
   for (var i = 0; i < features.length; i++) {
     Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
   }
 }
+
+// Click on plot to show weather condition in map:
+var weatherConditions = [
+  { label: 'Windspeed (m/s)', value: 'FG', scale: 0.1 },
+  { label: 'Min Sight (m)', value: 'VVN', scale: 100 },
+  { label: 'Max Windgust (m/s)', value: 'FXX', scale: 0.1 },
+  { label: 'Min Temp (C)', value: 'TN', scale: 0.1 },
+  { label: 'Avg Temp (C)', value: 'TG', scale: 0.1 },
+  // { label: 'Humidity (%)', value: 'UG', scale: 1 },
+  { label: 'Total Precipitation (mm)', value: 'RH', scale: 0.1 }
+];
+weatherConditions.forEach(function (con, i) {
+  document.getElementById('histo' + (i+1)).onclick = function() {
+    chooseWeatherCondition(con);
+  }
+});
+// Init map
+setTimeout(function() { chooseWeatherCondition(weatherConditions[0]); }, 2000);

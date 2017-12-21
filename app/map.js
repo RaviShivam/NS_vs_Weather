@@ -80,6 +80,8 @@ var trackData = {};
 const provinceNames = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
 var disturbancesCF, disturbancesByDay, disturbancesByCauseGroup, disturbancesByLine, disturbancesTrackGrouping,
     weatherCF, weatherByDay, weatherByProvince, weatherProvinceGrouping;
+var weatherCondition = {};
+var formattedExtent = ['20110101', '20170901'];
 
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
 /* Initialize tooltip */
@@ -218,13 +220,13 @@ d3.csv("../data/weatherPerProvince.csv", function(error, data) {
   weatherByProvince = weatherCF.dimension(function(d) { return d.PROVINCE });
 
   // Group by province, find minimum temperature
-  function reduceAdd(p, v) {return Math.min(p, parseInt(v.TG) / 10); }
+  function reduceAdd(p, v) {return Math.min(p, parseInt(v[weatherCondition.value]) * weatherCondition.scale); }
   function reduceRemove(p, v) { return p }
   function reduceInitial() { return 100; }
   weatherProvinceGrouping = weatherByProvince.group(function(d) { return d; });
   weatherProvinceGrouping.reduce(reduceAdd, reduceRemove, reduceInitial);
 
-  plotWeather(['20100101', '20180101'], 'Temperature');
+  plotWeather(['20100101', '20180101']);
 });
 
 function convertDate(inputFormat, seperator) {
@@ -233,7 +235,7 @@ function convertDate(inputFormat, seperator) {
   return [d.getFullYear(), pad(d.getMonth()+1), pad(d.getDate())].join(seperator || '');
 }
 
-function plotWeather(formattedExtent, condition) {
+function plotWeather(formattedExtent) {
 
   // Weather condition as color
   const provinceData = {};
@@ -256,18 +258,20 @@ function plotWeather(formattedExtent, condition) {
       const provinceWeather = dateWeather.filter(function(a) { return a.PROVINCE === province });
 
       var sum = 0;
-      var minProv = 100;
-      provinceWeather.forEach(function (item) { minProv = Math.min(minProv, parseInt(item.TG) / 10); });
+      if (weatherCondition.value === 'RH')
+        provinceWeather.forEach(function (item) { sum += Math.max(0, parseInt(item[weatherCondition.value])) });
+      else
+        provinceWeather.forEach(function (item) { sum += parseInt(item[weatherCondition.value]) || 0 });
 
-      if (minProv !== 100)
-        provinceData[province] = minProv;
+      sum *= weatherCondition.scale;
+      provinceData[province] = sum / provinceWeather.length;
 
       min = Math.min(min, provinceData[province]) || min;
       max = Math.max(max, provinceData[province]) || max;
     });
   }
-  min -= 2;
-  max += 2;
+  min /= 1.1;
+  max *= 1.1;
 
   var color = d3.scale.linear()
       .domain([min, max])
@@ -278,7 +282,7 @@ function plotWeather(formattedExtent, condition) {
   });
 
   //Set title
-  d3.select('.legendTitle').text(condition);
+  d3.select('.legendTitle').text(weatherCondition.label);
 
   //Set scale for x-axis
   var legendWidth = width * 0.6;
@@ -513,10 +517,16 @@ function plotDisturbances(formattedExtent, types) {
 // ----------------- BIND FUNCTIONS TO UI ---------------------------------------
 // ------------------------------------------------------------------------------
 function chooseMapDateExtent(extent) {
-  var formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
-  plotWeather(formattedExtent, 'Temperature');
+  formattedExtent = [convertDate(extent[0]), convertDate(extent[1])];
+  plotWeather(formattedExtent);
   plotDisturbances(formattedExtent);
 }
 function chooseMapTypes(types) {
   plotDisturbances(types);
+}
+function chooseWeatherCondition(con) {
+  // var minTemp = { label: 'Minimum Temperature (C)', value: 'TN', scale: 0.1 };
+  // var con = { label: 'Precipitation (mm)', value: 'RH', scale: 10 };
+  weatherCondition = con;
+  plotWeather(formattedExtent);
 }
