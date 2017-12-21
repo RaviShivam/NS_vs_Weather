@@ -93,11 +93,10 @@ nv.addGraph(function() {
         .controlLabels({stacked: "Stacked"})
         .duration(300);
 
-
     chart.brushExtent([1293843600000, 1504227600000]);
 
-    chart.xAxis.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
-    chart.x2Axis.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+    chart.xAxis.tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
+    chart.x2Axis.tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
     chart.yAxis.tickFormat(d3.format(',.4f'));
     chart.y2Axis.tickFormat(d3.format(',.4f'));
 
@@ -118,11 +117,9 @@ nv.addGraph(function() {
                 })
             }, 0)
         });
-    //
     // nv.utils.windowResize(chart.update);
     // d3.selectAll(".resize").on("dragleave", function(d){
     //     console.log(d)
     // });
     return chart;
-
 });
