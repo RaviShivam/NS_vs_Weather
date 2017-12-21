@@ -3,13 +3,32 @@ var histoWeatherData = []
 var plotDivs = ['histo1','histo2','histo3','histo4','histo5','histo6'];
 var plotted = false;
 
+var shortMonths = { "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12 };
+function parseWeirdDateFormat(d) {
+  var split = d.split('-');
+  return new Date(parseInt("20" + split[2]), shortMonths[split[1]], parseInt(split[2]));
+}
+
+var featureNames = [ "min_temp", "avg_temp", "max_windgust", "total_precipitation", "humidity", "windspeed", "min_sight"];
+var frequencies;
+
 // Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
 Plotly.d3.csv("../data/delaysWithProvinceAndWeather.csv", function(disturbances) {
   histogramData = disturbances;
-  if( histoWeatherData.length == 0) {
+  // Set types
+  histogramData.forEach(function (d) {
+    d.Date = parseWeirdDateFormat(d.Date);
+    featureNames.forEach(function(featName) {
+      d[featName] = parseInt(d[featName]);
+    });
+    d.Province = d.Province.split(' ');
+  });
+
+  if (histoWeatherData.length === 0) {
     Plotly.d3.csv("../data/processedWeather.csv", function(weather) {
       histoWeatherData = weather;
       processData(disturbances);
+      return createBars(disturbances, frequencies);
     });
   }
 });
@@ -41,61 +60,41 @@ function updateHistograms(date1, date2, categories, province) {
       data = data.filter(x => categories.includes(x["Cause Group"]));
     }
     if(province) {
-      data = data.filter(x => x["Province"].split(' ').includes(province));
+      data = data.filter(x => x["Province"].includes(province));
     }
-    processData(data);
+    createBars(data, frequencies);
   }
 }
 
 function dateIsBetween(x, date1, date2) {
-  months = {
-    "Jan": "-01-",
-    "Feb": "-02-",
-    "Mar": "-03-",
-    "Apr": "-04-",
-    "May": "-05-",
-    "Jun": "-06-",
-    "Jul": "-07-",
-    "Aug": "-08-",
-    "Sep": "-09-",
-    "Oct": "-10-",
-    "Nov": "-11-",
-    "Dec": "-12-",
-  };
-
-  xdate = new Date("20" + x.substr(7,2) + months[x.substr(3,3)] + x.substr(0,2));
-  return date1 <= xdate && xdate <= date2;
+  return date1 <= x && x <= date2;
 }
 
-function processData(disturbances) {
-    mintempfreq = grouped(histoWeatherData.map(x => parseInt(x["min_temp"])));
-    avgtempfreq = grouped(histoWeatherData.map(x => parseInt(x["avg_temp"])));
-    maxwindgustfreq = grouped(histoWeatherData.map(x => parseInt(x["max_windgust"])));
-    totalprecipitationfreq = grouped(histoWeatherData.map(x => parseInt(x["total_precipitation"])));
-    humidityfreq = grouped(histoWeatherData.map(x => parseInt(x["humidity"])));
-    windspeedreq = grouped(histoWeatherData.map(x => parseInt(x["windspeed"])));
-    minsightreq = grouped(histoWeatherData.map(x => parseInt(x["min_sight"])));
+function processData() {
+    var mintempfreq = grouped(histoWeatherData.map(x => (x["min_temp"])));
+    var maxwindgustfreq = grouped(histoWeatherData.map(x => (x["max_windgust"])));
+    var totalprecipitationfreq = grouped(histoWeatherData.map(x => (x["total_precipitation"])));
+    var humidityfreq = grouped(histoWeatherData.map(x => (x["humidity"])));
+    var windspeedreq = grouped(histoWeatherData.map(x => (x["windspeed"])));
+    var minsightreq = grouped(histoWeatherData.map(x => (x["min_sight"])));
 
     frequencies = {
       "Min Temp": mintempfreq,
-      "Avg Temp": avgtempfreq,
       "Max Windgust": maxwindgustfreq,
       "Total Precipitation": totalprecipitationfreq,
       "Humidity": humidityfreq,
       "Windspeed": windspeedreq,
       "Min Sight": minsightreq
-    }
-    return createBars(disturbances, frequencies);
+    };
 }
 
 function createBars(data, freq) {
-  windspeed = grouped(data.map(x => parseInt(x["Windspeed"] )));
-  minsight = grouped(data.map(x => parseInt(x["Min Sight"] )));
-  windgust = grouped(data.map(x => parseInt(x["Max Windgust"] )));
-  mintemp = grouped(data.map(x => parseInt(x["Min Temp"] )));
-  // avgtemp = grouped(data.map(x => parseInt(x["Avg Temp"] )));
-  humidity = grouped(data.map(x => parseInt(x["Humidity"] )));
-  totalprecipitation = grouped(data.map(x => parseInt(x["Total Precipitation"] )));
+  var windspeed = grouped(data.map(x => (x["Windspeed"] )));
+  var minsight = grouped(data.map(x => (x["Min Sight"] )));
+  var windgust = grouped(data.map(x => (x["Max Windgust"] )));
+  var mintemp = grouped(data.map(x => (x["Min Temp"] )));
+  var humidity = grouped(data.map(x => (x["Humidity"] )));
+  var totalprecipitation = grouped(data.map(x => (x["Total Precipitation"] )));
 
   windspeed.label = "Windspeed";
   minsight.label = "Min Sight";
@@ -140,7 +139,7 @@ function createBars(data, freq) {
     plotted = true;
   } else {
     for (var i = 0; i < features.length; i++) {
-      Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
+      // Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
       var update = {
         x: [features[i].bars.x],
         y: [features[i].bars.y],
