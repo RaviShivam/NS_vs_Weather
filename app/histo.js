@@ -1,7 +1,18 @@
 var histogramData = [];
-var histoWeatherData = []
-var plotDivs = ['histo1','histo2','histo3','histo4','histo5','histo6'];
+var histoWeatherData = [];
+var lastDataUpdate = null;
+var plotDOMnames = ['histo1','histo2','histo3','histo4','histo5','histo6'];
 var plotted = false;
+var plotScope = {}
+var weatherConditions = [
+  { label: 'Windspeed (m/s)', value: 'FG', scale: 0.1 },
+  { label: 'Min Sight (m)', value: 'VVN', scale: 100 },
+  { label: 'Max Windgust (m/s)', value: 'FXX', scale: 0.1 },
+  { label: 'Min Temp (C)', value: 'TN', scale: 0.1 },
+  // { label: 'Avg Temp (C)', value: 'TG', scale: 0.1 },
+  { label: 'Total Precipitation (mm)', value: 'RH', scale: 0.1 },
+  { label: 'Humidity (%)', value: 'UG', scale: 1 },
+];
 
 // Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
 Plotly.d3.csv("../data/delaysWithProvinceAndWeather.csv", function(disturbances) {
@@ -43,6 +54,7 @@ function updateHistograms(date1, date2, categories, province) {
     if(province) {
       data = data.filter(x => x["Province"].split(' ').includes(province));
     }
+    // lastDataUpdate = data;
     processData(data);
   }
 }
@@ -108,6 +120,9 @@ function createBars(data, freq) {
   features = [windspeed, windgust, minsight, mintemp, totalprecipitation, humidity];
 
   //Normalize all features, set the plotting attributes and layout per plot.
+  for (var i = 0; i < features.length; i++) {
+    features[i].title = weatherConditions[i].label;
+  }
   features.forEach(function(feature) {
       for (var i = 0; i < feature[1].length; i++) {
         feature[1][i] = feature[1][i] / freq[feature.label][1][i];
@@ -122,8 +137,7 @@ function createBars(data, freq) {
       bargroupgap: 0.01,
       barmode: "overlay",
       xaxis: {
-        title: feature.label,
-        fixedrange: true
+        title: feature.title,
       },
       yaxis: {
         title: "Average amount of disturbances",
@@ -136,11 +150,12 @@ function createBars(data, freq) {
   if (!plotted) {
     for (var i = 0; i < features.length; i++) {
       Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
+      plotScope[features[i].label] = null;
+      setListener('histo'+(i+1), features[i].label)
     }
     plotted = true;
   } else {
     for (var i = 0; i < features.length; i++) {
-      Plotly.newPlot('histo'+(i+1), [features[i].bars], features[i].layout, {displayModeBar: false});
       var update = {
         x: [features[i].bars.x],
         y: [features[i].bars.y],
@@ -150,16 +165,24 @@ function createBars(data, freq) {
   }
 }
 
+function setListener(name, label) {
+  var div = document.getElementById(name);
+  div.label = label;
+  div.on('plotly_relayout',
+      function(eventdata){
+        console.log(eventdata);
+        console.log(div.label);
+        var start = eventdata['xaxis.range[0]'];
+        var end = eventdata['xaxis.range[1]']
+        if(start && end) {
+          plotScope[div.label] = {'start': start, 'end': end};
+        } else {
+          plotScope[div.label] = null;
+        }
+      });
+}
+
 // Click on plot to show weather condition in map:
-var weatherConditions = [
-  { label: 'Windspeed (m/s)', value: 'FG', scale: 0.1 },
-  { label: 'Min Sight (m)', value: 'VVN', scale: 100 },
-  { label: 'Max Windgust (m/s)', value: 'FXX', scale: 0.1 },
-  { label: 'Min Temp (C)', value: 'TN', scale: 0.1 },
-  // { label: 'Avg Temp (C)', value: 'TG', scale: 0.1 },
-  { label: 'Total Precipitation (mm)', value: 'RH', scale: 0.1 },
-  { label: 'Humidity (%)', value: 'UG', scale: 1 },
-];
 weatherConditions.forEach(function (con, i) {
   document.getElementById('histo' + (i+1)).onclick = function() {
     chooseWeatherCondition(con);
