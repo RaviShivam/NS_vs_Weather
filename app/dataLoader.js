@@ -121,6 +121,6 @@ function onFilter(dateFilter, provinceFilter) {
 function updateStackGraph(data) {
   d3.select('#stackGraphContainer')
       .datum(data)
-      .transition().duration(500)
+      .transition().duration(1000)
       .call(window.stackGraphChart);
 }

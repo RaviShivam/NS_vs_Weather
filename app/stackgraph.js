@@ -64,9 +64,14 @@ function throttle(fn, threshhold, scope) {
   };
 }
 var chooseDateExtent = throttle(function () {
+    var prevExtent = window.dateExtent;
     window.dateExtent = [new Date(window.timeRange[0]), new Date(window.timeRange[1])];
-    chooseMapDateExtent(window.dateExtent);
-    // updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
+
+    if (prevExtent && prevExtent[0].getTime() !== window.dateExtent[0].getTime() && prevExtent[1].getTime() !== window.dateExtent[1].getTime()) {
+      console.log('test')
+      chooseMapDateExtent(window.dateExtent);
+      updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
+    }
   }, 500);
 
 

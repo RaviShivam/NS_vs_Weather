@@ -3,7 +3,8 @@ var histoWeatherData = []
 var plotDivs = ['histo1','histo2','histo3','histo4','histo5','histo6'];
 var plotted = false;
 
-Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
+// Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
+Plotly.d3.csv("../data/delaysWithProvinceAndWeather.csv", function(disturbances) {
   histogramData = disturbances;
   if( histoWeatherData.length == 0) {
     Plotly.d3.csv("../data/processedWeather.csv", function(weather) {
@@ -29,7 +30,8 @@ function grouped(arr) {
     return [a, b];
 }
 
-function updateHistograms(date1, date2, categories) {
+function updateHistograms(date1, date2, categories, province) {
+  // console.log('inputs',date1, date2, categories, province);
   var data = histogramData;
   if(data.length > 0) {
     if(date1 && date2) {
@@ -38,9 +40,10 @@ function updateHistograms(date1, date2, categories) {
     if(categories.length > 0) {
       data = data.filter(x => categories.includes(x["Cause Group"]));
     }
+    if(province) {
+      data = data.filter(x => x["Province"].split(' ').includes(province));
+    }
     processData(data);
-    // plotDivs.forEach(function(item){Plotly.purge(item)});
-    // restyle(processData(data));
   }
 }
 
@@ -65,7 +68,6 @@ function dateIsBetween(x, date1, date2) {
 }
 
 function processData(disturbances) {
-
     mintempfreq = grouped(histoWeatherData.map(x => parseInt(x["min_temp"])));
     avgtempfreq = grouped(histoWeatherData.map(x => parseInt(x["avg_temp"])));
     maxwindgustfreq = grouped(histoWeatherData.map(x => parseInt(x["max_windgust"])));
