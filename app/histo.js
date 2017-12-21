@@ -1,13 +1,13 @@
 var histogramData = [];
-var weatherData = []
+var histoWeatherData = []
 var plotDivs = ['histo1','histo2','histo3','histo4','histo5','histo6'];
 var plotted = false;
 
 Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
   histogramData = disturbances;
-  if( weatherData.length == 0) {
+  if( histoWeatherData.length == 0) {
     Plotly.d3.csv("../data/processedWeather.csv", function(weather) {
-      weatherData = weather;
+      histoWeatherData = weather;
       processData(disturbances);
     });
   }
@@ -67,14 +67,14 @@ function dateIsBetween(x, date1, date2) {
 
 function processData(disturbances) {
 
-    console.log(weatherData);
-    mintempfreq = grouped(weatherData.map(x => parseInt(x["min_temp"])));
-    avgtempfreq = grouped(weatherData.map(x => parseInt(x["avg_temp"])));
-    maxwindgustfreq = grouped(weatherData.map(x => parseInt(x["max_windgust"])));
-    totalprecipitationfreq = grouped(weatherData.map(x => parseInt(x["total_precipitation"])));
-    humidityfreq = grouped(weatherData.map(x => parseInt(x["humidity"])));
-    windspeedreq = grouped(weatherData.map(x => parseInt(x["windspeed"])));
-    minsightreq = grouped(weatherData.map(x => parseInt(x["min_sight"])));
+    console.log(histoWeatherData);
+    mintempfreq = grouped(histoWeatherData.map(x => parseInt(x["min_temp"])));
+    avgtempfreq = grouped(histoWeatherData.map(x => parseInt(x["avg_temp"])));
+    maxwindgustfreq = grouped(histoWeatherData.map(x => parseInt(x["max_windgust"])));
+    totalprecipitationfreq = grouped(histoWeatherData.map(x => parseInt(x["total_precipitation"])));
+    humidityfreq = grouped(histoWeatherData.map(x => parseInt(x["humidity"])));
+    windspeedreq = grouped(histoWeatherData.map(x => parseInt(x["windspeed"])));
+    minsightreq = grouped(histoWeatherData.map(x => parseInt(x["min_sight"])));
 
     frequencies = {
       "Min Temp": mintempfreq,
