@@ -69,7 +69,6 @@ nv.addGraph(function() {
     chart.x2Axis.tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
     chart.yAxis.tickFormat(d3.format(',.4f'));
     chart.y2Axis.tickFormat(d3.format(',.4f'));
-
     chart.legend.vers('furious');
 
     // d3.select('#stackGraphContainer')

@@ -2,6 +2,7 @@ var histogramData = [];
 var histoWeatherData = [];
 var plotted = false;
 var plotScope = {};
+var normalize = true, updateLayout = false;
 var weatherConditions = [
   { label: 'Windspeed (m/s)', value: 'FG', scale: 0.1 },
   { label: 'Min Sight (m)', value: 'VVN', scale: 100 },
@@ -120,12 +121,21 @@ function processData() {
   weatherDateDimension.filterAll();
   weatherDateDimension.filter(window.dateExtent);
 
+  // Filter per province
+
+
   // Find frequencies for each feature
   frequencies = {};
   weatherFeaturesCF.forEach(function (weatherFeature) {
     var groupedData = weatherFeature.group.all();
     frequencies[weatherFeature.feature] = {};
-    groupedData.forEach(function (item) { frequencies[weatherFeature.feature][item.key] = item.value });
+    groupedData.forEach(function (item) {
+      frequencies[weatherFeature.feature][item.key] = item.value;
+
+      // TODO If filter is per province, we should use frequencies of weather per province, but it's not available, so just
+      // divide the frequency of whole country by 6, that looks about right in most cases...
+      if (normalize && window.selectedProvinces && window.selectedProvinces.length === 1) frequencies[weatherFeature.feature][item.key] /= 6;
+    });
   });
 }
 
@@ -135,10 +145,12 @@ function createBars(filteredData) {
     var feature = grouped(filteredData.map(function(x) { return x[label]; }));
 
     // Normalise feature data
-    for (var i = 0; i < feature[1].length; i++) {
-      const totalWeatherConditionOccurances = frequencies[featureNames[labelIndex]][feature[0][i]];
-      // console.log(frequencies[featureNames[labelIndex]], feature[0]);
-      feature[1][i] = feature[1][i] / totalWeatherConditionOccurances;
+    if (normalize) {
+      for (var i = 0; i < feature[1].length; i++) {
+        const totalWeatherConditionOccurances = frequencies[featureNames[labelIndex]][feature[0][i]];
+        // console.log(frequencies[featureNames[labelIndex]], feature[0]);
+        feature[1][i] = feature[1][i] / totalWeatherConditionOccurances;
+      }
     }
 
     barFeatures.push({
@@ -156,7 +168,7 @@ function createBars(filteredData) {
           title: weatherConditions[labelIndex].label
         },
         yaxis: {
-          title: "Average amount of disturbances",
+          title: normalize ? 'Avg. #disturbances' : '#disturbances',
           fixedrange: true
         }
       }
@@ -175,10 +187,15 @@ function createBars(filteredData) {
     for (var i = 0; i < barFeatures.length; i++) {
       var update = {
         x: [barFeatures[i].bars.x],
-        y: [barFeatures[i].bars.y]
+        y: [barFeatures[i].bars.y],
       };
       Plotly.restyle('histo'+(i+1), update);
+
+      if (updateLayout) {
+        Plotly.relayout('histo'+(i+1), barFeatures[i].layout);
+      }
     }
+    updateLayout = false;
   }
 }
 
@@ -187,8 +204,8 @@ function setListener(name, label) {
   div.label = label;
   div.on('plotly_relayout',
       function(eventdata){
-        console.log(eventdata);
-        console.log(div.label);
+        // console.log(eventdata);
+        // console.log(div.label);
         var start = eventdata['xaxis.range[0]'];
         var end = eventdata['xaxis.range[1]']
         if(start && end) {
@@ -207,3 +224,9 @@ weatherConditions.forEach(function (con, i) {
 });
 // Init map
 setTimeout(function() { chooseWeatherCondition(weatherConditions[0]); }, 2000);
+
+function onChangeHistoNormalize() {
+  normalize = document.getElementById('histoNormalizeInput').checked;
+  updateLayout = true;
+  updateHistograms(window.dateExtent[0], window.dateExtent[1], window.typesArray || [], window.selectedProvinces || []);
+}

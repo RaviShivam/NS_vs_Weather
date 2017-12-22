@@ -21,6 +21,14 @@
                     <div class="hist" id="histo4"></div>
                     <div class="hist" id="histo5"></div>
                     <div class="hist" id="histo6"></div>
+
+
+                    <div style="position: fixed; right: 0">
+                        <label for="histoNormalizeInput" title="Divides the amount of disturbances per bar by the amount of days where that weather condition value occured">
+                            Normalize
+                        </label>
+                        <input id="histoNormalizeInput" type="checkbox" onclick="onChangeHistoNormalize()" checked="" />
+                    </div>
                 </div>
 
                 <svg id="stackGraphContainer"></svg>
