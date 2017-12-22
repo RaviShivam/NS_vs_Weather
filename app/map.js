@@ -61,6 +61,8 @@ function focus(d) {
 
   if (this.getAttribute('class').indexOf('province') !== -1) {
     onFilter(null, [this.id]);
+  } else if (window.selectedProvinces && window.selectedProvinces.length > 0) {
+    onFilter(null, []);
   }
 }
 
@@ -76,6 +78,8 @@ function reset() {
   zoom.translate([-width * .45, -height * .25]);
 
   if (node && node.getAttribute('class').indexOf('province') !== -1) {
+    onFilter(null, []);
+  } else if (window.selectedProvinces && window.selectedProvinces.length > 0) {
     onFilter(null, []);
   }
 }
@@ -483,9 +487,9 @@ function getDisturbancesPerTrack(distSubset) {
 
         if (track in tracks) {
           tracks[track].count += 1;
-          tracks[track].totalDuration += parseFloat(distSubset[i].duration_minutes);
+          tracks[track].totalDuration += parseFloat(distSubset[i].duration_minutes || 0);
         } else {
-          tracks[track] = { count: 1, totalDuration: parseFloat(distSubset[i].duration_minutes) };
+          tracks[track] = { count: 1, totalDuration: parseFloat(distSubset[i].duration_minutes) || 0 };
         }
       }
     });
