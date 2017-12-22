@@ -88,7 +88,7 @@ function onFilter(dateFilter, provinceFilter) {
     date.filter(dateFilter[0], dateFilter[0]);
   }
   if (provinceFilter) {
-
+    window.selectedProvinces = provinceFilter;
   }
 
   // Filter for each cause group in the stack graph

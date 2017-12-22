@@ -69,7 +69,7 @@ var chooseDateExtent = throttle(function () {
 
     if (prevExtent && (prevExtent[0].getTime() !== window.dateExtent[0].getTime() || prevExtent[1].getTime() !== window.dateExtent[1].getTime())) {
       chooseMapDateExtent(window.dateExtent);
-      updateHistograms(window.dateExtent[0], window.dateExtent[1], []);
+      updateHistograms(window.dateExtent[0], window.dateExtent[1], window.typesArray || [], window.selectedProvinces || []);
     }
   }, 500);
 
@@ -84,8 +84,10 @@ window.chooseTypes = function(state) {
     types[item.key] = !state.disabled[i];
   });
   window.types = types;
+  window.typesArray = Object.keys(types).filter(function(x) { return types[x] });
   // chooseMapTypes(types);
   chooseMapDateExtent(window.dateExtent);
+  updateHistograms(window.dateExtent[0], window.dateExtent[1], window.typesArray || [], window.selectedProvinces || []);
 };
 window.types = {};
 

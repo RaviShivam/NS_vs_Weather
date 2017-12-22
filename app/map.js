@@ -281,8 +281,8 @@ function plotWeather(formattedExtent) {
       max = Math.max(max, provinceData[province]) || max;
     });
   }
-  min /= 1.1;
-  max *= 1.1;
+  // min /= 1.1;
+  // max *= 1.1;
 
   var color = d3.scale.linear()
       .domain([min, max])
