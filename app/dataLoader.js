@@ -78,7 +78,7 @@ d3.csv("../data/disturbancesWithProvinces.csv", function(error, disturbances) {
   });
 
   // Init stack graph
-  onFilter();
+  setTimeout(function() { onFilter(); }, 1000);
 });
 
 // Actual filtering happens here

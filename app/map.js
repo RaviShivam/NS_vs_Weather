@@ -117,7 +117,7 @@ svg.call(tip);
 // ----------------- ADD MAP ----------------------------------------------------
 // ------------------------------------------------------------------------------
 
-
+var lowColor = "#1a2a6c", highColor = "#ee4d5a";
 d3.json("../data/provinces.json", function(error, data) {
   var colour = d3.scale.ordinal(d3.schemeCategory20);
 
@@ -155,8 +155,8 @@ d3.json("../data/provinces.json", function(error, data) {
       .attr("x2", "100%").attr("y2", "0%")
       .selectAll("stop")
       .data([
-        {offset: "0%", color: "blue"},
-        {offset: "100%", color: "red"}
+        {offset: "0%", color: lowColor},
+        {offset: "100%", color: highColor}
       ])
       .enter().append("stop")
       .attr("offset", function(d) { return d.offset; })
@@ -286,7 +286,7 @@ function plotWeather(formattedExtent) {
 
   var color = d3.scale.linear()
       .domain([min, max])
-      .range(["blue", "red"]);
+      .range([lowColor, highColor]);
 
   Object.keys(provinceData).forEach(function(province) {
     d3.select("#" + province.replace(' ', '')).style("fill", color(provinceData[province]));
@@ -460,9 +460,9 @@ d3.csv("../data/disturbancesWithLines.csv", function(error, data) {
         .on("click", function(d) { focus.bind(this)(d); })
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide);
-  });
 
-  setTimeout(function() { plotDisturbances(['20110101', '20170901']); }, 200);
+    plotDisturbances(['20110101', '20170901']);
+  });
 });
 
 function getDisturbancesPerTrack(distSubset) {

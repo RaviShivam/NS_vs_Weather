@@ -153,7 +153,7 @@ function createBars(filteredData) {
         bargroupgap: 0.01,
         barmode: "overlay",
         xaxis: {
-          title: label
+          title: weatherConditions[labelIndex].label
         },
         yaxis: {
           title: "Average amount of disturbances",
