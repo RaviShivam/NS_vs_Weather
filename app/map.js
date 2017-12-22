@@ -91,7 +91,7 @@ var trackData = {};
 const provinceNames = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
 var disturbancesCF, disturbancesByDay, disturbancesByCauseGroup, disturbancesByLine, disturbancesTrackGrouping,
     weatherCF, weatherByDay, weatherByProvince, weatherProvinceGrouping;
-var weatherCondition = {};
+var weatherCondition = {}, provinceData = {};
 var formattedExtent = ['20110101', '20170901'];
 
 function capitalize(s) { return s && s[0].toUpperCase() + s.slice(1); }
@@ -109,6 +109,8 @@ var tip = d3.tip().attr('class', 'd3-tip')
           text += '<br /><strong>Total duration (h)</strong> <span>' + Math.round(trackData.tracks[this.id].totalDuration / 60) + '</span>';
           text += '<br /><strong>Average duration (h)</strong> <span>' + Math.round((trackData.tracks[this.id].totalDuration / 60) / trackData.tracks[this.id].count * 10)/10 + '</span>';
         }
+      } else if (thisClass.indexOf('province') !== -1) {
+        text += '<br /><strong>' + weatherCondition.label + ' </strong> <span>' + Math.round(provinceData[this.id] * 10)/10 || 'Unknown' + '</span>';
       }
       return text;
     });
@@ -249,7 +251,7 @@ function convertDate(inputFormat, seperator) {
 function plotWeather(formattedExtent) {
 
   // Weather condition as color
-  const provinceData = {};
+  provinceData = {};
 
   var min = 10000, max = -10000;
   if (false) {
