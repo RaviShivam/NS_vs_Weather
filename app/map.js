@@ -308,7 +308,9 @@ function plotWeather(formattedExtent) {
       .scale(xScale);
 
   //Set up X axis
-  d3.select('.axis').call(xAxis);
+  d3.select('.axis')
+      .transition().duration(300)
+      .call(xAxis);
 }
 
 // ----------------- ADD TRAIN STATIONS -----------------------------------------

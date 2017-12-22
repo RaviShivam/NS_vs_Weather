@@ -6,6 +6,7 @@ function formatMonth(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
 }
 
+var causeTypes = ["infrastructure", "engineering work", "unknown", "weather", "external", "logistical", "rolling stock", "accidents", "staff" ];
 d3.csv("../data/disturbancesWithProvinces.csv", function(error, disturbances) {
   var monthIds = [];
 
@@ -59,8 +60,7 @@ d3.csv("../data/disturbancesWithProvinces.csv", function(error, disturbances) {
   // provincesGroup = provinces.groupAll().reduce(reduceAdd, reduceRemove, reduceInitial);
 
   // Get disturbances per cause per month
-  var causeTypes = [ "accidents", "engineering work", "external", "infrastructure", "logistical", "rolling stock", "staff", "unknown", "weather" ];
-  causeTypes.forEach(function (c, i) {
+  causeTypes.forEach(function (c,) {
     cause.filterAll();
     cause.filter(c);
     var causeDisturbancesCF = crossfilter(cause.top(Infinity));
@@ -93,7 +93,7 @@ function onFilter(dateFilter, provinceFilter) {
 
   // Filter for each cause group in the stack graph
   var stackGraphInput = [];
-  Object.keys(stackGraphData).forEach(function (key) {
+  causeTypes.forEach(function (key) {
     if (provinceFilter) {
       stackGraphData[key].provinceFilter.filterAll();
       if (provinceFilter.length !== 0) { // No filter -> show all
@@ -116,6 +116,7 @@ function onFilter(dateFilter, provinceFilter) {
   // console.log(stackGraphInput);
   // console.log(groupedByCause, groupedByMonth);
   updateStackGraph(stackGraphInput);
+  updateHistograms(null, null, window.typesArray || [], window.selectedProvinces || []);
 }
 
 function updateStackGraph(data) {

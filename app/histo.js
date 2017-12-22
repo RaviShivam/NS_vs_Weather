@@ -1,7 +1,7 @@
 var histogramData = [];
 var histoWeatherData = [];
 var plotted = false;
-var plotScope = {}
+var plotScope = {};
 var weatherConditions = [
   { label: 'Windspeed (m/s)', value: 'FG', scale: 0.1 },
   { label: 'Min Sight (m)', value: 'VVN', scale: 100 },
@@ -21,7 +21,8 @@ var featureLabels = ["Windspeed", "Min Sight", "Max Windgust", "Min Temp", "Humi
 var featureNames = ["windspeed", "min_sight", "max_windgust", "min_temp", "humidity", "total_precipitation"];
 var frequencies;
 
-var weatherFeaturesCF, weatherDateDimension;
+var weatherFeaturesCF, weatherDateDimension,
+  disturbanceFeaturesCF, disturbanceDateDimension;
 
 // Plotly.d3.csv("../data/weatherPerDisturbance.csv", function(disturbances) {
 Plotly.d3.csv("../data/delaysWithProvinceAndWeather.csv", function(disturbances) {
@@ -29,39 +30,37 @@ Plotly.d3.csv("../data/delaysWithProvinceAndWeather.csv", function(disturbances)
   // Set types
   histogramData.forEach(function (d) {
     d.Date = parseWeirdDateFormat(d.Date);
-
     d.Province = d.Province.split(' ');
   });
 
-  if (histoWeatherData.length === 0) {
-    Plotly.d3.csv("../data/processedWeather.csv", function(weather) {
-      histoWeatherData = weather;
+  Plotly.d3.csv("../data/processedWeather.csv", function(weather) {
+    histoWeatherData = weather;
 
-      // Parse all features correctly
-      histoWeatherData.forEach(function(d) {
-        featureNames.forEach(function(featName) {
-          d[featName] = parseInt(d[featName]);
-        });
-        d.date = new Date(d.date);
+    // Parse all features correctly
+    histoWeatherData.forEach(function(d) {
+      featureNames.forEach(function(featName) {
+        d[featName] = parseInt(d[featName]);
       });
-
-      // Set up crossfilter to find frequencies per day
-      var histoWeatherDataCF = crossfilter(histoWeatherData);
-      weatherDateDimension = histoWeatherDataCF.dimension(function(d) { return d.date });
-      weatherFeaturesCF = featureNames.map(function(featName) {
-        var featDimension = histoWeatherDataCF.dimension(function(d) { return d[featName] });
-        var featGroup = featDimension.group(function(d) { return d });
-        return {
-          feature: featName,
-          dimension: featDimension,
-          group: featGroup
-        };
-      });
-
-      processData();
-      return createBars(disturbances, frequencies);
+      d.date = new Date(d.date);
     });
-  }
+
+    // Set up crossfilter to find frequencies per day
+    var histoWeatherDataCF = crossfilter(histoWeatherData);
+    weatherDateDimension = histoWeatherDataCF.dimension(function(d) { return d.date });
+    weatherFeaturesCF = featureNames.map(function(featName) {
+      var featDimension = histoWeatherDataCF.dimension(function(d) { return d[featName] });
+      var featGroup = featDimension.group(function(d) { return d });
+      return {
+        feature: featName,
+        dimension: featDimension,
+        group: featGroup
+      };
+    });
+
+    processData();
+    return createBars(disturbances, frequencies);
+  });
+
 });
 
 function grouped(arr) {
@@ -81,20 +80,19 @@ function grouped(arr) {
 }
 
 function updateHistograms(date1, date2, categories, provinces) {
-  // console.log('inputs',date1, date2, categories, province);
   processData();
   var data = histogramData;
   if(data.length > 0) {
     if(date1 && date2) {
-      data = data.filter(function(x) { dateIsBetween(x["Date"], date1, date2) });
+      data = data.filter(function(x) { return dateIsBetween(x["Date"], date1, date2) });
     }
     if(categories.length > 0) {
-      data = data.filter(function(x) { categories.includes(x["Cause Group"]) });
+      data = data.filter(function(x) { return categories.includes(x["Cause Group"]) });
     }
     if(provinces.length > 0) {
-      data = data.filter(function(x) { x["Province"].includes(provinces[0]) });
+      data = data.filter(function(x) { return x["Province"].includes(provinces[0]) });
     }
-    createBars(data, frequencies);
+    createBars(data);
   }
 }
 
@@ -131,10 +129,10 @@ function processData() {
   });
 }
 
-function createBars() {
+function createBars(filteredData) {
   const barFeatures = [];
   featureLabels.forEach(function(label, labelIndex) {
-    var feature = grouped(histogramData.map(function(x) { return x[label]; }));
+    var feature = grouped(filteredData.map(function(x) { return x[label]; }));
 
     // Normalise feature data
     for (var i = 0; i < feature[1].length; i++) {
